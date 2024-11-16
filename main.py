@@ -1,11 +1,13 @@
+from time import sleep
 import numpy as np
 import pandas as pd
 import os
+import subwindows as sw
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
-from PyQt5.QtWidgets import QLabel
-
+from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox,QTableWidget,QTableWidgetItem
+from importing import mandates,invoices,emails
 from PyQt5.QtWidgets import QHBoxLayout
 
 
@@ -16,15 +18,26 @@ class TableView(QtWidgets.QTableWidget):
         self.setData()
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
-
-    def setData(self):
+    def set_new_data(self,data):
+        """
+        sets the Table to new data
+        :param data: pd.Dataframe
+        :return:
+        """
+        self.data = data.to_dict(orient="list")
+        self.setData(data.shape[0],data.shape[1])
+    def setData(self,rowcount = 0, colcount = 0):
+        print(colcount,rowcount)
+        self.setColumnCount(colcount)
+        self.setRowCount(rowcount)
         horHeaders = []
         for n, key in enumerate(sorted(self.data.keys())):
             horHeaders.append(key)
             for m, item in enumerate(self.data[key]):
-                newitem = QtWidgets.QTableWidgetItem(item)
+                newitem = QtWidgets.QTableWidgetItem(str(item))
                 self.setItem(m, n, newitem)
         self.setHorizontalHeaderLabels(horHeaders)
+
 
 class ImportDialog(QtWidgets.QDialog):
     def __init__(self,mainwind):
@@ -46,131 +59,131 @@ class ImportDialog(QtWidgets.QDialog):
             layout.addLayout(layouts[i])
         layout.addWidget(okbutton)
         self.setLayout(layout)
+        def sel_filepath_and_import():
+            dialog = QFileDialog()
+            foo_dir = dialog.getExistingDirectory(self, 'Select an awesome directory')
+        buttons[0].pressed.connect()
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         print("Initializing Window")
         self.setWindowTitle("Faktura Infinity Addon")
+        self.second_window = None
+        self.home_directory = "/home/leander/gei"
 
-        self.init_Ui_file_not_loaded()
+        self.init_Ui_overview()
+        self.init_data()
 
-    def init_Ui_file_not_loaded(self):
+    def init_Ui_overview(self):
         self.centralwidget = QtWidgets.QWidget(self)
         # main layout setup
         self.overallverticallayout = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.verticalLayout0 = QtWidgets.QVBoxLayout()  # layout on the left with the masslist, and other stuff
-        self.verticalLayout1 = QtWidgets.QVBoxLayout()  # laout on the right with the graph
-        self.table_0_0 = TableView()
-        self.table_0_1 = TableView()
-        self.creditor_ID_layout = QtWidgets.QHBoxLayout()
-        self.creditor_ID_label = QtWidgets.QLabel()
-        self.table_1_0 = TableView()
-
-        self.horizontalLayout.addLayout(self.verticalLayout0)
-        self.horizontalLayout.addLayout(self.verticalLayout1)
-        self.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
-        self.verticalLayout0.addWidget(self.table_0_0)
-        self.verticalLayout0.addWidget(QLabel("Mandatsdaten KonsumentInnen"))
-        self.verticalLayout0.addWidget(self.table_0_1)
-        self.verticalLayout0.addLayout(self.creditor_ID_layout)
-        self.creditor_ID_layout.addWidget(QtWidgets.QLabel("Creditor ID:"))
-        self.creditor_ID_layout.addWidget(self.creditor_ID_label)
-        self.verticalLayout0.setStretch(1, 7)
-        self.verticalLayout0.setStretch(3, 7)
-
-
-        # plot widget for the verticalLayout1
-        self.verticalLayout1.addWidget(QLabel("Rechnungsdaten ProduzentInnen"))
-        self.verticalLayout1.addWidget(self.table_1_0)
-
-        menubar = QtWidgets.QMenuBar()
-        self.actionFile = menubar.addMenu("Datei")
-        # the po.importanythingact triggers init_UI_file_loaded() and init_plots()
-        importanythingact = QtWidgets.QAction("Importieren", self)
-        importanythingact.setShortcut("Ctrl+I")
-        importanythingact.triggered.connect(self.importanything)
-        makeinvact = QtWidgets.QAction("Rechnungen erstellen", self)
-        makeinvact.triggered.connect(self.makeinvoice)
-        makeinfexpact = QtWidgets.QAction("Für Infinity vorbereiten", self)
-        makeinfexpact.triggered.connect(self.makeinfexport)
-        mailingact = QtWidgets.QAction("Emails Senden", self)
-        mailingact.triggered.connect(self.mailingselect)
-        self.actionFile.addAction(importanythingact)
-        self.actionFile.addAction(makeinvact)
-        self.actionFile.addAction(makeinfexpact)
-        self.actionFile.addAction(mailingact)
-
-
-        self.actionFile.addSeparator()
-        quit = QtWidgets.QAction("Schließen", self)
-        quit.setShortcut("Alt+F4")
-        quit.triggered.connect(lambda: sys.exit(0))
-        self.actionFile.addAction(quit)
-
-        self.overallverticallayout.addWidget(menubar)
-        self.overallverticallayout.addLayout(self.horizontalLayout)
         self.setCentralWidget(self.centralwidget)
+        button1 = QtWidgets.QPushButton("SEPA Export erstellen")
+        button2= QtWidgets.QPushButton("Rechnung erstellen (noch nicht implementiert)")
+        button3 = QtWidgets.QPushButton("Mitglied anmelden (noch nicht implementiert)")
+        button1.pressed.connect(self.init_SEPA_export_UI)
+        self.init_SEPA_export_UI() ###########################
+        self.overallverticallayout.addWidget(button1)
+        self.overallverticallayout.addWidget(button2)
+        self.overallverticallayout.addWidget(button3)
+
+    def init_data(self):
+        self.mandates = mandates
+        self.invoices = invoices
+        self.emails = emails
+    def init_SEPA_export_UI(self):
+        if self.second_window is None:
+            def load_filepath(title,filter= "Excel (*.xlsx)"):
+                dlg = QMessageBox(self)
+                dlg.setWindowTitle("Importiern")
+                dlg.setText("Von wo willst du importierten?")
+                local = dlg.addButton('Lokal', QMessageBox.YesRole)
+                nextcloud = dlg.addButton('Nextcloud', QMessageBox.NoRole)
+                button = dlg.exec()
+
+                if dlg.clickedButton() == local:
+                    print("Lokal")
+                    filepath,filter = QFileDialog.getOpenFileName(self, title, "/home/leander/gei", filter)
+                elif dlg.clickedButton() == nextcloud:
+                    print("Nextcloud")
+                return filepath
+
+            def import_mandates():
+                print("Import mandates")
+                filepath = load_filepath("Importiere SEPA Mandate")
+                mandatedata = self.mandates.load_data(filepath)
+                self.second_window.reload_table_view("0_1",mandatedata)
+
+            def import_invoice_data():
+                print("import invoice data")
+                filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
+                invoicedata = self.invoices.load_data(filepath)
+                self.second_window.reload_table_view("0_0",invoicedata["debit"])
+                self.second_window.reload_table_view("1_0",invoicedata["transfer"])
 
 
+            def select_templates():
+                print("Select templates")
+                filepath1 = load_filepath("Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
+                filepath2 = load_filepath("Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
+                template = self.mandates.load_template(filepath1,filepath2)
+                self.second_window.creditor_ID_label.setText("Ja")
+            def export_csv():
+                print("Export cvs")
 
-    def importanything(self):
-        print("Import Action")
-        dlg = ImportDialog(self)
-        dlg.exec()
+            menubardata = [["Importiere Mandate","Strg+I",import_mandates],["Importiere Rechnungsdaten von EEG Faktura","",import_invoice_data],["Vorlage für SEPA Export auswählen","",select_templates],["Exportiere .csv Datei für Raiffeisen Infinty","",export_csv]]
+            self.second_window = sw.Subwindow("SEPA Export", menubardata)
+            self.second_window.horizontalLayout = QtWidgets.QHBoxLayout()
+            self.second_window.verticalLayout0 = QtWidgets.QVBoxLayout()  # layout on the left with the masslist, and other stuff
+            self.second_window.verticalLayout1 = QtWidgets.QVBoxLayout()  # laout on the right with the graph
+            self.second_window.table_0_0 = TableView()
+            self.second_window.table_0_1 = TableView()
+            self.second_window.creditor_ID_layout = QtWidgets.QHBoxLayout()
+            self.second_window.creditor_ID_label = QtWidgets.QLabel("Nein")
+            self.second_window.table_1_0 = TableView()
 
-    def makeinvoice(self):
-        print("Invoice Action")
-        # auswählen wohin und welches format
+            def reload_table_view(tablenr,data):
+                """
 
-    def makeinfexport(self):
-        print("Inf exp action")
-        # zeige für welche kundInnen kein sepa mandat vorhanden
+                :param tablenr: in columns on the grid "0_0","0_1","1_0"
+                :param data: as a Pandas Dataframe
+                :return:
+                """
+                tabledict = {"0_0":self.second_window.table_0_0,
+                             "0_1": self.second_window.table_0_1,
+                             "1_0": self.second_window.table_1_0,
+                             }
+                tabledict[tablenr].set_new_data(data)
+            self.second_window.reload_table_view = reload_table_view
 
-    def mailingselect(self):
-        print("Send Mails")
-        # auswählen an wen (woher bekommen wir die mail daten?)
-
-        # dialog = QtWidgets.QFileDialog()
-        # filepath, filter = dialog.getimportanythingactName(None, "Window name", "", "HDF5_files (*.hdf5)")
-        # self.filename = filepath
-        # # if self.file_loaded:
-        # #     print("remove old plot stuff")
-        # #     pyqtgraph_objects.remove_all_plot_items(parent)
-        # self.init_basket_objects()
-        # self.init_UI_file_loaded()
-        # self.init_plots()
-        # self.file_loaded = True
-
-    def init_basket_objects(self):
-        # those are the "basket" objects, where the data is in sp = all data that has to do with the spectrum, ml = all data to the masslist
-
-        self.plot_settings = {"vert_lines_color_suggestions": (97, 99, 102, 70),
-                              "vert_lines_color_masslist": (38, 135, 20),
-                              "vert_lines_color_masslist_without_composition": (13, 110, 184),
-                              "vert_lines_color_isotopes": (252, 3, 244, 70),
-                              # RGB tubel and last number gives the transparency (from 0 to 255)
-                              "vert_lines_width_suggestions": 1,
-                              "vert_lines_width_masslist": 2,
-                              "vert_lines_width_isotopes": 1.5,
-                              "average_spectrum_color": (252, 49, 3),
-                              "max_spectrum_color": (122, 72, 6, 80),
-                              "min_spectrum_color": (11, 125, 191, 80),
-                              "sub_spectrum_color": (103, 42, 201, 80),
-                              "color_cycle": ['r', 'g', 'b', 'c', 'm', 'y'],
-                              "current_color": 0,
-                              "current_color_fixed": 0,
-                              "background_color": "w",
-                              "show_plots": [True, False, False, False],
-                              # plots corresponding to [avg spectrum, min spec, max spect, subspectr]
-                              "avg": False,
-                              "raw": True
-                              }
+            self.second_window.horizontalLayout.addLayout(self.second_window.verticalLayout0)
+            self.second_window.horizontalLayout.addLayout(self.second_window.verticalLayout1)
+            self.second_window.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
+            self.second_window.verticalLayout0.addWidget(self.second_window.table_0_0)
+            self.second_window.verticalLayout0.addWidget(QLabel("Mandatsdaten KonsumentInnen"))
+            self.second_window.verticalLayout0.addWidget(self.second_window.table_0_1)
+            self.second_window.verticalLayout0.addLayout(self.second_window.creditor_ID_layout)
+            self.second_window.creditor_ID_layout.addWidget(QtWidgets.QLabel("Exportvolage geladen? "))
+            self.second_window.creditor_ID_layout.addWidget(self.second_window.creditor_ID_label)
+            self.second_window.verticalLayout0.setStretch(1, 7)
+            self.second_window.verticalLayout0.setStretch(3, 7)
 
 
-    def init_UI_file_loaded(self):
-        pass
+            # plot widget for the verticalLayout1
+            self.second_window.verticalLayout1.addWidget(QLabel("Rechnungsdaten ProduzentInnen"))
+            self.second_window.verticalLayout1.addWidget(self.second_window.table_1_0)
+            self.second_window.overallverticallayout.addLayout(self.second_window.horizontalLayout)
+
+
+            self.second_window.show()
+
+        else:
+            self.second_window.close()  # Close window.
+            self.second_window = None  # Discard reference.
+
+
 
     def init_plots(self):
         pass
