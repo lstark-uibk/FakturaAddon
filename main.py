@@ -6,9 +6,11 @@ import subwindows as sw
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
-from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox,QTableWidget,QTableWidgetItem
+from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout
 from importing import mandates,invoices,emails
+from exporting import produce_sepa_export_dfs
 from PyQt5.QtWidgets import QHBoxLayout
+import datetime as dt
 
 
 class TableView(QtWidgets.QTableWidget):
@@ -31,7 +33,7 @@ class TableView(QtWidgets.QTableWidget):
         self.setColumnCount(colcount)
         self.setRowCount(rowcount)
         horHeaders = []
-        for n, key in enumerate(sorted(self.data.keys())):
+        for n, key in enumerate(self.data.keys()):
             horHeaders.append(key)
             for m, item in enumerate(self.data[key]):
                 newitem = QtWidgets.QTableWidgetItem(str(item))
@@ -70,8 +72,14 @@ class MainWindow(QtWidgets.QMainWindow):
         print("Initializing Window")
         self.setWindowTitle("Faktura Infinity Addon")
         self.second_window = None
+        self.exportwindow = None
         self.home_directory = "/home/leander/gei"
+        self.loaded_filepaths = pd.DataFrame({"Daten":["Mandate","Mandate Vorlagen","Rechnungdaten","Rechnungsdaten Vorlagen"],
+                                  "Speicherort1":["","","",""],
+                                    "Speicherort2": ["", "", "", ""]
 
+                                              })
+        self.creditor_ID = "AT94ZZZ00000079822"
         self.init_Ui_overview()
         self.init_data()
 
@@ -95,54 +103,201 @@ class MainWindow(QtWidgets.QMainWindow):
         self.emails = emails
     def init_SEPA_export_UI(self):
         if self.second_window is None:
-            def load_filepath(title,filter= "Excel (*.xlsx)"):
+            def load_filepath(title,filter= "Excel (*.xlsx)",fileex=True):
                 dlg = QMessageBox(self)
-                dlg.setWindowTitle("Importiern")
-                dlg.setText("Von wo willst du importierten?")
-                local = dlg.addButton('Lokal', QMessageBox.YesRole)
-                nextcloud = dlg.addButton('Nextcloud', QMessageBox.NoRole)
-                button = dlg.exec()
 
-                if dlg.clickedButton() == local:
-                    print("Lokal")
+                    # dlg.setWindowTitle("Importiern")
+                    # dlg.setText("Von wo willst du importierten?")
+                    # local = dlg.addButton('Lokal', QMessageBox.YesRole)
+                    # nextcloud = dlg.addButton('Nextcloud', QMessageBox.NoRole)
+                    # button = dlg.exec()
+                    #
+                    # if dlg.clickedButton() == local:
+                print("Lokal")
+                if fileex:
                     filepath,filter = QFileDialog.getOpenFileName(self, title, "/home/leander/gei", filter)
-                elif dlg.clickedButton() == nextcloud:
-                    print("Nextcloud")
-                return filepath
+                else:
+                    filepath, filter = QFileDialog.getSaveFileName(self, title, "/home/leander/gei", filter)
+                    # elif dlg.clickedButton() == nextcloud:
+                    #     print("Nextcloud")
+                if 'filepath' in locals():
+                    return filepath
+                else: return None
 
-            def import_mandates():
-                print("Import mandates")
-                filepath = load_filepath("Importiere SEPA Mandate")
-                mandatedata = self.mandates.load_data(filepath)
-                self.second_window.reload_table_view("0_1",mandatedata)
+            def updatetable_1_1():
+                self.second_window.table_1_1.set_new_data(self.loaded_filepaths.iloc[0:3])
+
+
+            # def import_mandates():
+            #     print("Import mandates")
+            #     filepath = load_filepath("Importiere SEPA Mandate")
+            #     if filepath is not None:
+            #         self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
+            #
+            #         mandatedata = self.mandates.load_data(filepath)
+            #         self.second_window.reload_table_view("0_1",mandatedata)
+            #         self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
+            #         updatetable_1_1()
 
             def import_invoice_data():
                 print("import invoice data")
                 filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
-                invoicedata = self.invoices.load_data(filepath)
-                self.second_window.reload_table_view("0_0",invoicedata["debit"])
-                self.second_window.reload_table_view("1_0",invoicedata["transfer"])
+                if filepath is not None:
 
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechungsdaten"].index, "Speicherort1"] = filepath
+                    invoicedata = self.invoices.load_data(filepath)
+                    debit = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Rechnung")]
+                    transfer = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Gutschrift")|(invoicedata["list"]["Dokumenttyp"] == "Information")]
+
+                    self.second_window.reload_table_view("0_0",debit)
+                    self.second_window.reload_table_view("1_0",transfer)
+
+                    updatetable_1_1()
 
             def select_templates():
                 print("Select templates")
                 filepath1 = load_filepath("Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
-                filepath2 = load_filepath("Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
-                template = self.mandates.load_template(filepath1,filepath2)
-                self.second_window.creditor_ID_label.setText("Ja")
+                if filepath1 is not None:
+                    filepath2 = load_filepath("Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
+                    if filepath2 is not None:
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate Vorlagen"].index, "Speicherort1"] = filepath1
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate Vorlagen"].index, "Speicherort2"] = filepath2
+
+                        template = self.mandates.load_template(filepath1,filepath2)
+                        updatetable_1_1()
+
             def export_csv():
                 print("Export cvs")
+                if self.exportwindow is None:
+                    self.exportwindow = sw.Subwindow("Exportiere .csv für SEPA")
+                    self.exportwindow.verticalLayout = QVBoxLayout()
+                    header_layout = QHBoxLayout()
 
-            menubardata = [["Importiere Mandate","Strg+I",import_mandates],["Importiere Rechnungsdaten von EEG Faktura","",import_invoice_data],["Vorlage für SEPA Export auswählen","",select_templates],["Exportiere .csv Datei für Raiffeisen Infinty","",export_csv]]
+                    # Add header labels to the header layout
+                    header_label1 = QLabel("Name")
+                    header_label3 = QLabel("Betrag")
+                    header_layout.addWidget(header_label1)
+                    header_layout.addWidget(header_label3)
+
+                    # Adjust the header layout
+                    header_layout.addStretch(1)
+                    header_layout.setSpacing(20)
+
+
+                    self.exportwindow.list_widget = QListWidget()
+                    self.exportwindow.list_data = []
+
+                    names = []
+                    amounts = []
+                    for idx, person in self.invoices.data["list"].iterrows():
+                        name = person["Empfänger Vorame"]
+                        if not pd.isna(person["Empfänger Nachname"]):
+                            name += f" {person['Empfänger Nachname']}"
+                        names.append(name)
+                        amounts.append(person["Rechnungsbetrag Brutto"])
+                    # mandatesexist = []
+                    # for name in names:
+                    #     if (mandates.data["Zahlungspflichtiger Name"] == name).any():
+                    #         mandatesexist.append("x")
+                    #     else: mandatesexist.append("")
+
+                    for name,amount in zip(names,amounts):
+                        item = QListWidgetItem(self.exportwindow.list_widget )
+                        item.setSizeHint(QSize(500, 30))
+
+                        row_widget = QWidget()
+                        row_layout = QHBoxLayout()
+
+                        checkbox = QCheckBox()
+                        checkbox.setChecked(True)  # Default: unchecked
+                        row_layout.addWidget(checkbox)
+                        self.exportwindow.list_data.append(checkbox)
+
+                        col1 = QLabel(str(name))
+                        col2 = QLabel(str(amount))
+
+                        row_layout.addWidget(col1)
+                        row_layout.addWidget(col2)
+
+
+                        row_layout.setContentsMargins(0, 0,0,0)
+                        # row_layout.setSpacing(15)
+                        row_widget.setLayout(row_layout)
+
+                        self.exportwindow.list_widget.setItemWidget(item, row_widget)
+                    # mandateexist_list= QListWidget()
+
+                    # # Add items with checkboxes
+                    # for name,mandateex in zip(names,mandatesexist):
+                    #     item = QListWidgetItem(name)
+                    #     item.setCheckState(True)  # Unchecked by default
+                    #     self.exportwindow.list_widget.addItem(item)
+                    #     mandateexist_list.addItem(mandateex)
+
+                    def get_selected_names():
+                        nr_list_widgets = len(self.exportwindow.list_data)
+                        selected_names = [False] * nr_list_widgets
+                        for index,checkbox in enumerate(self.exportwindow.list_data):
+                            if checkbox.isChecked():
+                                selected_names[index] = True
+
+                        print(self.invoices.data["list"].loc[selected_names])
+                        invoices_selected_names = self.invoices.data["list"].loc[selected_names]
+
+                        exportingdebit,exportingtransfer = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
+                        print(f"df = {exportingdebit,exportingtransfer}")
+                        filepath1 = load_filepath("Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False)
+                        print(f"Export to: {filepath1}")
+                        if filepath1 is not None:
+                            try:
+                                exportingdebit.to_csv(filepath1, index=False,sep=";")
+                            except:print("savning didnot work")
+                        else: return
+
+                        filepath2 = load_filepath("Wähle Speicherort für Export für Überweisungen aus",
+                                                  filter="csv (*.csv)", fileex=False)
+                        print(f"Export to: {filepath2}")
+                        if filepath2 is not None:
+                            try:
+                                exportingtransfer.to_csv(filepath2, index=False,sep=";")
+                            except:print("savning didnot work")
+                        else:
+                            return
+                        self.exportwindow.close()
+                        return selected_names
+
+
+                    self.exportwindow.ok_button = QPushButton("OK")
+                    self.exportwindow.ok_button.pressed.connect(get_selected_names)
+                    self.exportwindow.overallverticallayout.addLayout(self.exportwindow.verticalLayout)
+
+                    self.exportwindow.verticalLayout.addLayout(header_layout)
+                    self.exportwindow.verticalLayout.addWidget(self.exportwindow.list_widget)
+                    self.exportwindow.verticalLayout.addWidget(self.exportwindow.ok_button)
+
+
+                    self.exportwindow.show()
+                else:
+                    self.exportwindow.close()  # Close window.
+                    self.exportwindow = None  # Discard reference.
+
+
+            # debitexport.to_csv("/home/leander/gei/faktura/pythonProject/data/Mandatexporttest1.csv", index=False,sep=";")
+
+
+            menubardata = [["Importiere Rechnungdaten von EEG Faktura","",import_invoice_data],["Vorlage für SEPA Export auswählen","",select_templates],["Exportiere .csv Datei für Raiffeisen Infinty","",export_csv]]
+            # ["Importiere Mandate","Strg+I",import_mandates]
             self.second_window = sw.Subwindow("SEPA Export", menubardata)
             self.second_window.horizontalLayout = QtWidgets.QHBoxLayout()
             self.second_window.verticalLayout0 = QtWidgets.QVBoxLayout()  # layout on the left with the masslist, and other stuff
             self.second_window.verticalLayout1 = QtWidgets.QVBoxLayout()  # laout on the right with the graph
             self.second_window.table_0_0 = TableView()
             self.second_window.table_0_1 = TableView()
-            self.second_window.creditor_ID_layout = QtWidgets.QHBoxLayout()
-            self.second_window.creditor_ID_label = QtWidgets.QLabel("Nein")
             self.second_window.table_1_0 = TableView()
+            self.second_window.table_1_1 = TableView()
+            self.second_window.table_1_1.set_new_data(self.loaded_filepaths)
+
+
 
             def reload_table_view(tablenr,data):
                 """
@@ -158,15 +313,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 tabledict[tablenr].set_new_data(data)
             self.second_window.reload_table_view = reload_table_view
 
-            self.second_window.horizontalLayout.addLayout(self.second_window.verticalLayout0)
             self.second_window.horizontalLayout.addLayout(self.second_window.verticalLayout1)
+            self.second_window.horizontalLayout.addLayout(self.second_window.verticalLayout0)
             self.second_window.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
             self.second_window.verticalLayout0.addWidget(self.second_window.table_0_0)
             self.second_window.verticalLayout0.addWidget(QLabel("Mandatsdaten KonsumentInnen"))
             self.second_window.verticalLayout0.addWidget(self.second_window.table_0_1)
-            self.second_window.verticalLayout0.addLayout(self.second_window.creditor_ID_layout)
-            self.second_window.creditor_ID_layout.addWidget(QtWidgets.QLabel("Exportvolage geladen? "))
-            self.second_window.creditor_ID_layout.addWidget(self.second_window.creditor_ID_label)
             self.second_window.verticalLayout0.setStretch(1, 7)
             self.second_window.verticalLayout0.setStretch(3, 7)
 
@@ -174,6 +326,11 @@ class MainWindow(QtWidgets.QMainWindow):
             # plot widget for the verticalLayout1
             self.second_window.verticalLayout1.addWidget(QLabel("Rechnungsdaten ProduzentInnen"))
             self.second_window.verticalLayout1.addWidget(self.second_window.table_1_0)
+            self.second_window.verticalLayout1.addWidget(QLabel("Dateien geladen:"))
+            self.second_window.verticalLayout1.addWidget(self.second_window.table_1_1)
+            self.second_window.verticalLayout1.setStretch(1, 7)
+            self.second_window.verticalLayout1.setStretch(3, 4)
+
             self.second_window.overallverticallayout.addLayout(self.second_window.horizontalLayout)
 
 
@@ -182,11 +339,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.second_window.close()  # Close window.
             self.second_window = None  # Discard reference.
-
-
-
-    def init_plots(self):
-        pass
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

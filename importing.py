@@ -1,3 +1,5 @@
+from tempfile import template
+import datetime as dt
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog
 
@@ -29,21 +31,22 @@ def load_mandates(filepath,nc = False):
 def load_mandate_template(filepath_lastschrift, filepath2= ''):
     print(f"Load {filepath_lastschrift},{filepath2}")
     templates = {}
-    templates["lastschrift"] = pd.read_csv(filepath_lastschrift)
-    templates["ueberweisung"]  = pd.read_csv(filepath2)
+    templates["debit"] = pd.read_csv(filepath_lastschrift,delimiter=";")
+    templates["transfer"]  = pd.read_csv(filepath2,delimiter=";")
     return templates
 
 
 def load_invoices(filepath,nc = False):
     print(filepath)
     if not nc:
-        data = pd.read_excel(filepath,sheet_name="Details")
+        data = pd.read_excel(filepath,sheet_name="Liste")
+        datadetailed = pd.read_excel(filepath,sheet_name="Details")
     else:
         print("Nextcloud loading")
 
     invoicedata = {}
-    invoicedata["debit"] = data[(data["Dokumenttyp"] == "Rechnung")]
-    invoicedata["transfer"] = data[(data["Dokumenttyp"] == "Gutschrift")|(data["Dokumenttyp"] == "Information")]
+    invoicedata["list"] = data
+    invoicedata["detailed"] = datadetailed
     return invoicedata
 
 def load_invoice_template(filepath):
@@ -60,3 +63,11 @@ mandates = Data(load_mandates,load_mandate_template)
 invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
 
+template_debit = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Lastschriften.csv"
+template_transfer = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Überweisungen.csv"
+datamandate = "/home/leander/gei/faktura/pythonProject/data/mandate.xlsx"
+datainvoices = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
+
+mandates.load_template(template_debit,template_transfer)
+mandates.load_data(datamandate)
+invoices.load_data(datainvoices)
