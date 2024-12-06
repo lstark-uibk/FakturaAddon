@@ -68,6 +68,6 @@ template_transfer = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Im
 datamandate = "/home/leander/gei/faktura/pythonProject/data/mandate.xlsx"
 datainvoices = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
 
-mandates.load_template(template_debit,template_transfer)
-mandates.load_data(datamandate)
-invoices.load_data(datainvoices)
+# mandates.load_template(template_debit,template_transfer)
+# mandates.load_data(datamandate)
+# invoices.load_data(datainvoices)
