@@ -19,7 +19,7 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
     transfer = invoices_selected_persons[(invoices_selected_persons["Dokumenttyp"] == "Gutschrift")|(invoices_selected_persons["Dokumenttyp"] == "Information")]
 
 
-    def create_one_line_debit(invoicelistline,creditor_ID,type = debit):
+    def create_one_line_debit(invoicelistline,creditor_ID,mandates,type = debit):
         print(invoicelistline["Empfänger Name"])
         columns_debit_export = ['Fälligkeitsdatum', 'Zahlungspflichtiger Name',
        'Zahlungspflichtiger Adresse', 'Zahlungspflichtiger Ort',
@@ -47,6 +47,18 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
             }
             exportline["Mandatsreferenz"] = f"{invoicelistline['Empfänger Mitgliedsnummer']:03}"
             exportline["Creditor ID"] = creditor_ID
+
+            mandateline = mandates.data[(mandates.data["Vorname"] == invoicelistline["Empfänger Vorame"])]
+            matchingmandate = True
+            if not pd.isna(invoicelistline["Empfänger Nachname"]):
+                mandateline = mandateline[(mandateline["Nachname"] == invoicelistline["Empfänger Nachname"])]
+            if mandateline.size > 0:
+                exportline["Mandatsausstellungsdatum"] = mandateline["Mandatsausstellungsdatum"].iloc[0].strftime("%d.%m.%Y")
+            else:
+                exportline["Creditor ID"] = 0
+                matchingmandate = False
+
+
         elif type == "transfer":
             exportline = pd.Series([""] * len(columns_transfer_export), index=columns_transfer_export)
             exportline["Durchführungsdatum"] = dt.datetime.today().strftime("%d.%m.%Y")
@@ -70,24 +82,29 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
 
         year, quartal = get_quartal_out_of_str(invoicelistline["Abrechnung"])
         exportline["Zahlungsreferenz/Verwendungszweck"] = f"Gemeinwohlenergie Rechung {year} Quartal {quartal}"
-
-        return exportline
+        if type == "debit":
+            return exportline, matchingmandate
+        else:
+            return exportline
 
 
     serieslist = []
+    missingmandats = []
     for index, line in debit.iterrows():
-        exportline = create_one_line_debit(line,creditor_ID,type="debit")
+        exportline,matchingmandate = create_one_line_debit(line,creditor_ID,mandates,type="debit")
         if exportline is not None:
             serieslist.append(exportline)
+            if not matchingmandate:
+                missingmandats.append(f"{line['Empfänger Vorame']} {line['Empfänger Nachname']}")
     debitexport = pd.concat(serieslist, axis=1).T
 
     serieslist = []
     for index, line in transfer.iterrows():
-        exportline = create_one_line_debit(line,creditor_ID,type="transfer")
+        exportline = create_one_line_debit(line,creditor_ID,mandates,type="transfer")
         if exportline is not None:
             serieslist.append(exportline)
     transferexport = pd.concat(serieslist, axis=1).T
-    return debitexport,transferexport
+    return debitexport,transferexport, missingmandats
 
 
 # base_dir = current_directory = os.getcwd()

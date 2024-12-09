@@ -1,7 +1,7 @@
 from tempfile import template
 import datetime as dt
 import pandas as pd
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 # mandate =pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
 # df = pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
@@ -22,11 +22,25 @@ class Data():
 def load_mandates(filepath,nc = False):
     print(f"Load {filepath}")
     if not nc:
-        mandates = pd.read_excel(filepath)
+        try:
+            mandates = pd.read_excel(filepath)
+        except:
+            errorbox = QMessageBox()
+            errorbox.setText("Ausgewählte Date ist nicht lesbar (ist sie im richtigen Format?)")
+            errorbox.exec_()
+            return
     else:
         print("Nextcloud loading")
-    mandates = mandates[~mandates['Mandatsreferenz'].isna()]
-    mandates['Mandatsausstellungsdatum'] = pd.to_datetime(mandates['Mandatsausstellungsdatum'])
+    try:
+        mandates = mandates[~mandates['Mandatsausstellungsdatum (Datum auf dem Vertrag)'].isna()]
+        mandates['Mandatsausstellungsdatum'] = pd.to_datetime(mandates['Mandatsausstellungsdatum (Datum auf dem Vertrag)'],dayfirst=True)
+        mandates = mandates.drop('Mandatsausstellungsdatum (Datum auf dem Vertrag)', axis=1)
+        mandates = mandates.rename(columns={'Vorname (gleich wie in eegfaktura)': 'Vorname', 'Nachname (gleich wie in eegfaktura)': 'Nachname','Mitgliedsnummer aus eegfaktura ist auch die Mandatsreferenz':'Mitgliedsnummer'})
+    except:
+        errorbox = QMessageBox()
+        errorbox.setText("Ausgewählte Date ist nicht lesbar (ist sie im richtigen Format?)")
+        errorbox.exec_()
+        return
     return mandates
 def load_mandate_template(filepath_lastschrift, filepath2= ''):
     print(f"Load {filepath_lastschrift},{filepath2}")
@@ -39,15 +53,24 @@ def load_mandate_template(filepath_lastschrift, filepath2= ''):
 def load_invoices(filepath,nc = False):
     print(filepath)
     if not nc:
-        data = pd.read_excel(filepath,sheet_name="Liste")
-        datadetailed = pd.read_excel(filepath,sheet_name="Details")
+        try:
+            data = pd.read_excel(filepath,sheet_name="Liste")
+            datadetailed = pd.read_excel(filepath,sheet_name="Details")
+        except:
+            data = None
+            datadetailed = None
+            errorbox = QMessageBox()
+            errorbox.setText("Ausgewählte Date ist nicht lesbar (ist sie im richtigen Format?)")
+            errorbox.exec_()
     else:
         print("Nextcloud loading")
-
-    invoicedata = {}
-    invoicedata["list"] = data
-    invoicedata["detailed"] = datadetailed
-    return invoicedata
+    if data is not None:
+        invoicedata = {}
+        invoicedata["list"] = data
+        invoicedata["detailed"] = datadetailed
+        return invoicedata
+    else:
+        return None
 
 def load_invoice_template(filepath):
     print(4)
@@ -65,7 +88,7 @@ emails = Data(load_mail_adresses,load_mail_template)
 
 template_debit = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Lastschriften.csv"
 template_transfer = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Überweisungen.csv"
-datamandate = "/home/leander/gei/faktura/pythonProject/data/mandate.xlsx"
+datamandate = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
 datainvoices = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
 
 # mandates.load_template(template_debit,template_transfer)

@@ -40,36 +40,38 @@ class TableView(QtWidgets.QTableWidget):
         self.setHorizontalHeaderLabels(horHeaders)
 
 
-class ImportDialog(QtWidgets.QDialog):
-    def __init__(self,mainwind):
-        super().__init__(mainwind)
-
-        self.setWindowTitle("Import")
-
-        layout = QtWidgets.QVBoxLayout()
-        importvariables = ["Rechnungsdaten aus EEG Faktura","Daten über Mandate","Vorlage Rechnungen","Vorlage Infinity Export"]
-        buttons = [0]*len(importvariables)
-        okbutton = QtWidgets.QPushButton("OK")
-        okbutton.pressed.connect(self.accept)
-        layouts = [0]*len(importvariables)
-        for i,importvariable in enumerate(importvariables):
-            layouts[i] = QtWidgets.QHBoxLayout()
-            layouts[i].addWidget(QtWidgets.QLabel(importvariable))
-            buttons[i] = QtWidgets.QPushButton("Laden")
-            layouts[i].addWidget(buttons[i])
-            layout.addLayout(layouts[i])
-        layout.addWidget(okbutton)
-        self.setLayout(layout)
-        def sel_filepath_and_import():
-            dialog = QFileDialog()
-            foo_dir = dialog.getExistingDirectory(self, 'Select an awesome directory')
-        buttons[0].pressed.connect()
+# class ImportDialog(QtWidgets.QDialog):
+#     def __init__(self,mainwind):
+#         super().__init__(mainwind)
+#
+#         self.setWindowTitle("Import")
+#
+#         layout = QtWidgets.QVBoxLayout()
+#         importvariables = ["Rechnungsdaten aus EEG Faktura","Daten über Mandate","Vorlage Rechnungen","Vorlage Infinity Export"]
+#         buttons = [0]*len(importvariables)
+#         okbutton = QtWidgets.QPushButton("OK")
+#         okbutton.pressed.connect(self.accept)
+#         layouts = [0]*len(importvariables)
+#         for i,importvariable in enumerate(importvariables):
+#             layouts[i] = QtWidgets.QHBoxLayout()
+#             layouts[i].addWidget(QtWidgets.QLabel(importvariable))
+#             buttons[i] = QtWidgets.QPushButton("Laden")
+#             layouts[i].addWidget(buttons[i])
+#             layout.addLayout(layouts[i])
+#         layout.addWidget(okbutton)
+#         self.setLayout(layout)
+#         def sel_filepath_and_import():
+#             dialog = QFileDialog()
+#             foo_dir = dialog.getExistingDirectory(self, 'Select an awesome directory')
+#         buttons[0].pressed.connect()
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         print("Initializing Window")
         self.setWindowTitle("Faktura Infinity Addon")
+        self.resize(1000, 600)
+        self.move(20, 20)
         self.second_window = None
         self.exportwindow = None
         self.home_directory = "/home/leander/gei"
@@ -79,15 +81,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
                                               })
         self.creditor_ID = "AT94ZZZ00000079821"
-        
+        self.mandatesdata_loaded = False
+        self.invoicesdata_loaded = False
         self.init_Ui()
         self.init_data()
 
     def init_Ui(self):
         self.centralwidget = QtWidgets.QWidget(self)
-        # main layout setup
         self.centralwidget = QtWidgets.QWidget(self)
-        # main layout setup
         self.overallverticallayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.menubardata = self.init_menubardata_mandates()
         if self.menubardata:
@@ -160,12 +161,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 # if dlg.clickedButton() == local:
             print("Lokal")
             if fileex:
-                filepath,filter = QFileDialog.getOpenFileName(self, title, "/home/leander/gei", filter)
+                filepath,filter = QFileDialog.getOpenFileName(self, title, self.home_directory, filter)
             else:
-                filepath, filter = QFileDialog.getSaveFileName(self, title, "/home/leander/gei", filter)
+                filepath, filter = QFileDialog.getSaveFileName(self, title,  self.home_directory, filter)
                 # elif dlg.clickedButton() == nextcloud:
                 #     print("Nextcloud")
-            if 'filepath' in locals():
+            if filepath:
                 return filepath
             else: return None
 
@@ -174,14 +175,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def import_mandates():
             print("Import mandates")
-            filepath = load_filepath("Importiere SEPA Mandate")
+            filepath = load_filepath("Lade Daten von SEPA Mandate")
             if filepath is not None:
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
 
                 mandatedata = self.mandates.load_data(filepath)
-                self.reload_table_view("0_1",mandatedata)
-                self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
-                updatetable_1_1()
+                if mandatedata is not None:
+                    self.reload_table_view("0_1",mandatedata)
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
+                    updatetable_1_1()
+                    self.mandatesdata_loaded = True
 
         def import_invoice_data():
             print("import invoice data")
@@ -190,13 +193,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechungsdaten"].index, "Speicherort1"] = filepath
                 invoicedata = self.invoices.load_data(filepath)
-                debit = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Rechnung")]
-                transfer = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Gutschrift")|(invoicedata["list"]["Dokumenttyp"] == "Information")]
+                if invoicedata is not None:
+                    debit = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Rechnung")]
+                    transfer = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Gutschrift")|(invoicedata["list"]["Dokumenttyp"] == "Information")]
 
-                self.reload_table_view("0_0",debit)
-                self.reload_table_view("1_0",transfer)
+                    self.reload_table_view("0_0",debit)
+                    self.reload_table_view("1_0",transfer)
 
-                updatetable_1_1()
+                    updatetable_1_1()
+                    self.invoicesdata_loaded = True
+                else:
+                    print()
 
         def select_templates():
             print("Select templates")
@@ -213,7 +220,22 @@ class MainWindow(QtWidgets.QMainWindow):
         def export_csv():
             print("Export cvs")
             if self.exportwindow is None:
+                #data check
+                if not self.invoicesdata_loaded:
+                    errorbox = QMessageBox()
+                    errorbox.setText("Es wurden keine Rechungsdaten ausgewählt, wähle zuerst diese aus und versuch es nochmal.")
+                    errorbox.exec_()
+                    return None
+                if not self.mandatesdata_loaded:
+                    errorbox = QMessageBox()
+                    errorbox.setText("Es wurden keine Mandatssdaten ausgewählt, wähle zuerst diese aus und versuch es nochmal.")
+                    errorbox.exec_()
+
+                    return None
+
                 self.exportwindow = sw.Subwindow("Exportiere .csv für SEPA")
+                self.exportwindow.resize(500, 500)
+                self.exportwindow.move(30, 30)
                 self.exportwindow.verticalLayout = QVBoxLayout()
                 header_layout = QHBoxLayout()
 
@@ -269,14 +291,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     row_widget.setLayout(row_layout)
 
                     self.exportwindow.list_widget.setItemWidget(item, row_widget)
-                # mandateexist_list= QListWidget()
-
-                # # Add items with checkboxes
-                # for name,mandateex in zip(names,mandatesexist):
-                #     item = QListWidgetItem(name)
-                #     item.setCheckState(True)  # Unchecked by default
-                #     self.exportwindow.list_widget.addItem(item)
-                #     mandateexist_list.addItem(mandateex)
 
                 def get_selected_names():
                     nr_list_widgets = len(self.exportwindow.list_data)
@@ -288,23 +302,46 @@ class MainWindow(QtWidgets.QMainWindow):
                     print(self.invoices.data["list"].loc[selected_names])
                     invoices_selected_names = self.invoices.data["list"].loc[selected_names]
 
-                    exportingdebit,exportingtransfer = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
+                    exportingdebit,exportingtransfer, missingmandates = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
+                    print(missingmandates)
+                    if missingmandates:
+                        dlg = QMessageBox(self)
+                        questiontext = f"Für folgende Personen gibt es Daten zur Lastschrift, aber keine Daten zu einem Mandat:\n\n"
+                        for name in missingmandates:
+                            questiontext += f"{name} \n"
+                        questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen."
+                        dlg.setText(questiontext)
+                        dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                        prompt = dlg.exec()
+                        if prompt == QMessageBox.No:
+                            print("Abort")
+                            return
+
                     print(f"df = {exportingdebit,exportingtransfer}")
                     filepath1 = load_filepath("Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False)
-                    print(f"Export to: {filepath1}")
                     if filepath1 is not None:
+                        if ".csv" not in filepath1:
+                            filepath1 = f"{filepath1}.csv"
+                        print(f"Export to: {filepath1}")
                         try:
                             exportingdebit.to_csv(filepath1, index=False,sep=";")
-                        except:print("savning didnot work")
+                        except:
+                            errorbox = QMessageBox("Saving didnot work")
+                            print("savning didnot work")
                     else: return
 
                     filepath2 = load_filepath("Wähle Speicherort für Export für Überweisungen aus",
                                               filter="csv (*.csv)", fileex=False)
-                    print(f"Export to: {filepath2}")
+
                     if filepath2 is not None:
+                        if ".csv" not in filepath2:
+                            filepath2 = f"{filepath2}.csv"
+                        print(f"Export to: {filepath2}")
                         try:
                             exportingtransfer.to_csv(filepath2, index=False,sep=";")
-                        except:print("savning didnot work")
+                        except:
+                            errorbox = QMessageBox("Saving didnot work")
+                            print("savning didnot work")
                     else:
                         return
                     self.exportwindow.close()
@@ -341,53 +378,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.reload_table_view = reload_table_view
 
         menubardata = [["Importiere Rechnungdaten von EEG Faktura", "", import_invoice_data],
-                            ["Vorlage für SEPA Export auswählen", "", import_mandates],
+                            ["Lade Daten von SEPA Mandate", "", import_mandates],
                             ["Exportiere .csv Datei für Raiffeisen Infinty", "", export_csv]]
         return menubardata
-
-    def init_SEPA_export_UI(self):
-
-
-
-            # debitexport.to_csv("/home/leander/gei/faktura/pythonProject/data/Mandatexporttest1.csv", index=False,sep=";")
-
-
-            menubardata = [["Importiere Rechnungdaten von EEG Faktura","",import_invoice_data],["Vorlage für SEPA Export auswählen (noch nicht implementiert)","",""],["Exportiere .csv Datei für Raiffeisen Infinty","",export_csv]]
-            # ["Importiere Mandate","Strg+I",import_mandates]
-            self.second_window = sw.Subwindow("SEPA Export", menubardata)
-            self.horizontalLayout = QtWidgets.QHBoxLayout()
-            self.verticalLayout0 = QtWidgets.QVBoxLayout()  # layout on the left with the masslist, and other stuff
-            self.verticalLayout1 = QtWidgets.QVBoxLayout()  # laout on the right with the graph
-            self.table_0_0 = TableView()
-            self.table_0_1 = TableView()
-            self.table_1_0 = TableView()
-            self.table_1_1 = TableView()
-            self.table_1_1.set_new_data(self.loaded_filepaths)
-
-
-
-            self.horizontalLayout.addLayout(self.verticalLayout1)
-            self.horizontalLayout.addLayout(self.verticalLayout0)
-            self.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
-            self.verticalLayout0.addWidget(self.table_0_0)
-            self.verticalLayout0.addWidget(QLabel("Mandatsdaten KonsumentInnen"))
-            self.verticalLayout0.addWidget(self.table_0_1)
-            self.verticalLayout0.setStretch(1, 7)
-            self.verticalLayout0.setStretch(3, 7)
-
-
-            # plot widget for the verticalLayout1
-            self.verticalLayout1.addWidget(QLabel("Rechnungsdaten ProduzentInnen"))
-            self.verticalLayout1.addWidget(self.table_1_0)
-            self.verticalLayout1.addWidget(QLabel("Dateien geladen:"))
-            self.verticalLayout1.addWidget(self.table_1_1)
-            self.verticalLayout1.setStretch(1, 7)
-            self.verticalLayout1.setStretch(3, 4)
-
-            self.overallverticallayout.addLayout(self.horizontalLayout)
-
-
-            self.show()
 
 
 def main():
