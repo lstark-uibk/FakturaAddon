@@ -76,9 +76,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.second_window = None
         self.exportwindow = None
         self.home_directory = "/home/leander/gei"
-        self.loaded_filepaths = pd.DataFrame({"Daten":["Mandate","Mandate Vorlagen","Rechnungdaten","Rechnungsdaten Vorlagen"],
-                                  "Speicherort1":["","","",""],
-                                    "Speicherort2": ["", "", "", ""]
+        self.loaded_filepaths = pd.DataFrame({"Daten":["Mandate","Rechnungsdaten","Rechnungsdaten Vorlagen"],
+                                  "Speicherort":["","",""],
 
                                               })
         self.creditor_ID = "AT94ZZZ00000079821"
@@ -192,12 +191,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 filepath = load_filepath("Lade Daten von SEPA Mandate")
 
             if filepath is not None:
-                self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
-
                 mandatedata = self.mandates.load_data(filepath,nc = nc_loading)
                 if mandatedata is not None:
                     self.reload_table_view("0_1",mandatedata)
-                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
                     updatetable_1_1()
                     self.mandatesdata_loaded = True
 
@@ -205,8 +202,9 @@ class MainWindow(QtWidgets.QMainWindow):
             print("import invoice data")
             filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
             if filepath is not None:
+                self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechnungsdaten"].index, "Speicherort"] = filepath
 
-                self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechungsdaten"].index, "Speicherort1"] = filepath
+
                 invoicedata = self.invoices.load_data(filepath)
                 if invoicedata is not None:
                     debit = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Rechnung")]
