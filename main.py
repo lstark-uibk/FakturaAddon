@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QHBoxLayout
 import datetime as dt
 
 
+
 class TableView(QtWidgets.QTableWidget):
     def __init__(self, data={"1":[0]}, *args):
         QtWidgets.QTableWidget.__init__(self, *args)
@@ -81,6 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                                               })
         self.creditor_ID = "AT94ZZZ00000079821"
+        self.nc_mandatefilepath = "Gemeinwohlenergie/Rechnungswesen, IT/Abrechnung Faktura/SEPA Lastschriftmandate/lastschriftmandate.xlsx"
         self.mandatesdata_loaded = False
         self.invoicesdata_loaded = False
         self.init_Ui()
@@ -175,11 +177,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def import_mandates():
             print("Import mandates")
-            filepath = load_filepath("Lade Daten von SEPA Mandate")
+            dlg = QMessageBox(self)
+            questiontext = f"Ich kann die Mandate von folgendem Pfad in nextcloud herunterladen:"
+            questiontext += f"\n\n{self.nc_mandatefilepath}"
+            questiontext += "\n\nSoll ich es von diesem Pfad herunterladen, oder willst du lokal eine Datei von deinem Computer auswählen?"
+            dlg.setText(questiontext)
+            dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            prompt = dlg.exec()
+            if prompt == QMessageBox.Yes:
+                nc_loading = True
+                filepath = self.nc_mandatefilepath
+            else:
+                nc_loading = False
+                filepath = load_filepath("Lade Daten von SEPA Mandate")
+
             if filepath is not None:
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
 
-                mandatedata = self.mandates.load_data(filepath)
+                mandatedata = self.mandates.load_data(filepath,nc = nc_loading)
                 if mandatedata is not None:
                     self.reload_table_view("0_1",mandatedata)
                     self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort1"] = filepath
@@ -310,6 +325,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         for name in missingmandates:
                             questiontext += f"{name} \n"
                         questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen."
+
                         dlg.setText(questiontext)
                         dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                         prompt = dlg.exec()

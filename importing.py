@@ -2,6 +2,9 @@ from tempfile import template
 import datetime as dt
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from nc_py_api import Nextcloud
+from io import BytesIO
+
 
 # mandate =pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
 # df = pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
@@ -12,14 +15,14 @@ class Data():
 
         self.data = []
         self.template_for_export = []
-    def load_data(self,filepath):
-        self.data = self.f_load_data(filepath)
+    def load_data(self,filepath,**kwargs):
+        self.data = self.f_load_data(filepath,**kwargs)
         return self.data
     def load_template(self,filepath1,filepath2 = ''):
         self.template_for_export = self.f_load_template(filepath1,filepath2 = filepath2)
         return self.template_for_export
 
-def load_mandates(filepath,nc = False):
+def load_mandates(filepath,nc =True):
     print(f"Load {filepath}")
     if not nc:
         try:
@@ -31,6 +34,15 @@ def load_mandates(filepath,nc = False):
             return
     else:
         print("Nextcloud loading")
+        nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
+        nc_auth_user = 'Leander'
+        nc_auth_pass = 'BnmgNB3VFO6s29'
+
+        nc = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=nc_auth_user, nc_auth_pass=nc_auth_pass)
+
+        mandates = nc.files.download(filepath)
+        mandates = pd.read_excel(BytesIO(mandates), engine='openpyxl')
+        print(mandates)
     try:
         mandates = mandates[~mandates['Mandatsausstellungsdatum (Datum auf dem Vertrag)'].isna()]
         mandates['Mandatsausstellungsdatum'] = pd.to_datetime(mandates['Mandatsausstellungsdatum (Datum auf dem Vertrag)'],dayfirst=True)
