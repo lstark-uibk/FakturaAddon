@@ -6,7 +6,7 @@ from subwindows import LoginPrompt, Subwindow
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
-from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QGridLayout, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout
 from importing import mandates,invoices,emails
 from exporting import produce_sepa_export_dfs
 from PyQt5.QtWidgets import QHBoxLayout
@@ -177,41 +177,48 @@ class MainWindow(QtWidgets.QMainWindow):
         def updatetable_1_1():
             self.table_1_1.set_new_data(self.loaded_filepaths.iloc[0:3])
 
-        def import_mandates():
-            print("Import mandates")
-            dlg = QMessageBox(self)
-            questiontext = f"Ich kann die Mandate von folgendem Pfad in nextcloud herunterladen:"
-            questiontext += f"\n\n{self.nc_mandatefilepath}"
-            questiontext += "\n\nSoll ich es von diesem Pfad herunterladen, oder willst du lokal eine Datei von deinem Computer auswählen?"
-            dlg.setText(questiontext)
-            dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            prompt = dlg.exec()
-
-            def load_mandate(filepath,nc_loading=False,nc_instance=""):
+        def import_mandates(filepath = ''):
+            def load_mandate(filepath, nc_loading=False, nc_instance=""):
                 if filepath is not None:
-                    mandatedata = self.mandates.load_data(filepath,nc = nc_loading,nc_instance=nc_instance)
+                    mandatedata = self.mandates.load_data(filepath, nc=nc_loading, nc_instance=nc_instance)
                     if mandatedata is not None:
-                        self.reload_table_view("0_1",mandatedata)
-                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
+                        self.reload_table_view("0_1", mandatedata)
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                            self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
                         updatetable_1_1()
                         self.mandatesdata_loaded = True
                 else:
                     return None
+            filepath = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
+
+            if not filepath:
+                print("Import mandates")
+                dlg = QMessageBox(self)
+                questiontext = f"Ich kann die Mandate von folgendem Pfad in nextcloud herunterladen:"
+                questiontext += f"\n\n{self.nc_mandatefilepath}"
+                questiontext += "\n\nSoll ich es von diesem Pfad herunterladen, oder willst du lokal eine Datei von deinem Computer auswählen?"
+                dlg.setText(questiontext)
+                dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                prompt = dlg.exec()
 
 
-            if prompt == QMessageBox.Yes:
-                nc_loading = True
-                self.loginprompt = LoginPrompt(load_mandate,self.nc_mandatefilepath)
-                self.loginprompt.show()
+
+
+                if prompt == QMessageBox.Yes:
+                    nc_loading = True
+                    self.loginprompt = LoginPrompt(load_mandate,self.nc_mandatefilepath)
+                    self.loginprompt.show()
+                else:
+                    nc_loading = False
+                    filepath = load_filepath("Lade Daten von SEPA Mandate")
+                    load_mandate(filepath)
             else:
-                nc_loading = False
-                filepath = load_filepath("Lade Daten von SEPA Mandate")
                 load_mandate(filepath)
-
 
         def import_invoice_data():
             print("import invoice data")
-            filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
+            filepath = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
+            # filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
             if filepath is not None:
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechnungsdaten"].index, "Speicherort"] = filepath
 
@@ -258,23 +265,27 @@ class MainWindow(QtWidgets.QMainWindow):
                     return None
 
                 self.exportwindow = Subwindow("Exportiere .csv für SEPA")
-                self.exportwindow.resize(500, 500)
+                self.exportwindow.resize(500, 100)
                 self.exportwindow.move(30, 30)
-                self.exportwindow.verticalLayout = QVBoxLayout()
+                self.exportwindow.tablegrid = QGridLayout()
+                self.exportwindow.tablegrid.setColumnStretch(0,1)
+                self.exportwindow.tablegrid.setColumnStretch(1,10)
+                self.exportwindow.tablegrid.setColumnStretch(2,5)
+
                 header_layout = QHBoxLayout()
 
                 # Add header labels to the header layout
-                header_label1 = QLabel("Name")
-                header_label3 = QLabel("Betrag")
+                header_label1 = QLabel("")
+                header_label2 = QLabel("Name")
+                header_label3 = QLabel("Betrag [€]")
                 header_layout.addWidget(header_label1)
+                header_layout.addWidget(header_label2)
                 header_layout.addWidget(header_label3)
+                header_layout.setStretch(0,1)
+                header_layout.setStretch(1,10)
+                header_layout.setStretch(2,5)
 
-                # Adjust the header layout
-                header_layout.addStretch(1)
-                header_layout.setSpacing(20)
 
-
-                self.exportwindow.list_widget = QListWidget()
                 self.exportwindow.list_data = []
 
                 names = []
@@ -284,37 +295,34 @@ class MainWindow(QtWidgets.QMainWindow):
                     if not pd.isna(person["Empfänger Nachname"]):
                         name += f" {person['Empfänger Nachname']}"
                     names.append(name)
-                    amounts.append(person["Rechnungsbetrag Brutto"])
+                    if person["Dokumenttyp"] == "Rechnung":
+                        amounts.append(-person["Rechnungsbetrag Brutto"])
+                    else: amounts.append(person["Rechnungsbetrag Brutto"])
+
                 # mandatesexist = []
                 # for name in names:
                 #     if (mandates.data["Zahlungspflichtiger Name"] == name).any():
                 #         mandatesexist.append("x")
                 #     else: mandatesexist.append("")
 
-                for name,amount in zip(names,amounts):
-                    item = QListWidgetItem(self.exportwindow.list_widget )
-                    item.setSizeHint(QSize(500, 30))
-
-                    row_widget = QWidget()
-                    row_layout = QHBoxLayout()
-
+                for index,(name,amount) in enumerate(zip(names,amounts)):
+                    index += 1
                     checkbox = QCheckBox()
-                    checkbox.setChecked(True)  # Default: unchecked
-                    row_layout.addWidget(checkbox)
-                    self.exportwindow.list_data.append(checkbox)
-
+                    checkbox.setChecked(True)
                     col1 = QLabel(str(name))
                     col2 = QLabel(str(amount))
 
-                    row_layout.addWidget(col1)
-                    row_layout.addWidget(col2)
+                    self.exportwindow.tablegrid.addWidget(checkbox,index,0)
+                    self.exportwindow.tablegrid.addWidget(col1,index,1)
+                    self.exportwindow.tablegrid.addWidget(col2,index,2)
+
+                    self.exportwindow.list_data.append(checkbox)
+
+                # print(self.exportwindow.tablegrid.rowCount())
+                # for i in range(0,self.exportwindow.tablegrid.rowCount()):
+                #     self.exportwindow.tablegrid.setRowStretch(i, 0)
 
 
-                    row_layout.setContentsMargins(0, 0,0,0)
-                    # row_layout.setSpacing(15)
-                    row_widget.setLayout(row_layout)
-
-                    self.exportwindow.list_widget.setItemWidget(item, row_widget)
 
                 def get_selected_names():
                     nr_list_widgets = len(self.exportwindow.list_data)
@@ -375,11 +383,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.exportwindow.ok_button = QPushButton("OK")
                 self.exportwindow.ok_button.pressed.connect(get_selected_names)
-                self.exportwindow.overallverticallayout.addLayout(self.exportwindow.verticalLayout)
+                self.exportwindow.overallverticallayout.addLayout(header_layout)
+                self.exportwindow.overallverticallayout.addLayout(self.exportwindow.tablegrid)
+                # self.exportwindow.overallverticallayout.addWidget(self.exportwindow.list_widget)
+                self.exportwindow.overallverticallayout.addWidget(self.exportwindow.ok_button)
 
-                self.exportwindow.verticalLayout.addLayout(header_layout)
-                self.exportwindow.verticalLayout.addWidget(self.exportwindow.list_widget)
-                self.exportwindow.verticalLayout.addWidget(self.exportwindow.ok_button)
 
 
                 self.exportwindow.show()
