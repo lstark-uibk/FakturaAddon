@@ -21,7 +21,7 @@ class Data():
         self.template_for_export = self.f_load_template(filepath1,filepath2 = filepath2)
         return self.template_for_export
 
-def load_mandates(filepath,nc =True, nc_instance = ''):
+def load_mandates(filepath,nc =False, nc_instance = ''):
     print(f"Load {filepath}")
     if not nc:
         try:
@@ -97,5 +97,5 @@ datamandate = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
 datainvoices = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
 
 # mandates.load_template(template_debit,template_transfer)
-# mandates.load_data(datamandate)
-# invoices.load_data(datainvoices)
+mandates.load_data(datamandate)
+invoices.load_data(datainvoices)

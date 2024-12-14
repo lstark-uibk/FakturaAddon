@@ -48,12 +48,14 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
             exportline["Mandatsreferenz"] = f"{invoicelistline['Empfänger Mitgliedsnummer']:03}"
             exportline["Creditor ID"] = creditor_ID
 
+
             mandateline = mandates.data[(mandates.data["Vorname"] == invoicelistline["Empfänger Vorame"])]
             matchingmandate = True
             if not pd.isna(invoicelistline["Empfänger Nachname"]):
                 mandateline = mandateline[(mandateline["Nachname"] == invoicelistline["Empfänger Nachname"])]
             if mandateline.size > 0:
                 exportline["Mandatsausstellungsdatum"] = mandateline["Mandatsausstellungsdatum"].iloc[0].strftime("%d.%m.%Y")
+                exportline["Firmenlastschrift"] = mandateline["Firmenlastschrift"].iloc[0]
             else:
                 exportline["Creditor ID"] = 0
                 matchingmandate = False
