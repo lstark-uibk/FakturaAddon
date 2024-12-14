@@ -84,6 +84,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.nc_auth_user = ''
         self.nc_auth_pass = ''
         self.creditor_ID = "AT94ZZZ00000079821"
+        self.nc_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
         self.nc_mandatefilepath = "Gemeinwohlenergie/Rechnungswesen, IT/Abrechnung Faktura/SEPA Lastschriftmandate/lastschriftmandate.xlsx"
         self.mandatesdata_loaded = False
         self.invoicesdata_loaded = False
@@ -94,24 +95,35 @@ class MainWindow(QtWidgets.QMainWindow):
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget = QtWidgets.QWidget(self)
         self.overallverticallayout = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.menubardata = self.init_menubardata_mandates()
-        if self.menubardata:
-            menubar = QtWidgets.QMenuBar()
+        menubar = QtWidgets.QMenuBar()
+        self.menubardata_Infinity= self.init_menubardata_mandates()
+        if self.menubardata_Infinity:
             self.actionFile = menubar.addMenu("Infinity export")
-            for menuline in self.menubardata:
+            for menuline in self.menubardata_Infinity:
                 action = QtWidgets.QAction(menuline[0], self)
                 action.triggered.connect(menuline[2])
                 if menuline[1]:
                     action.setShortcut(menuline[1])
                 self.actionFile.addAction(action)
-
             self.actionFile.addSeparator()
             quit = QtWidgets.QAction("Schließen", self)
             quit.setShortcut("Alt+F4")
             quit.triggered.connect(lambda: sys.exit(0))
             self.actionFile.addAction(quit)
 
-            self.overallverticallayout.addWidget(menubar)
+        self.menubardata_New_member= self.init_menubardata_new_member()
+        if self.menubardata_New_member:
+            self.actionFile = menubar.addMenu("Neues Mitglied onbording")
+            for menuline in self.menubardata_New_member:
+                action = QtWidgets.QAction(menuline[0], self)
+                action.triggered.connect(menuline[2])
+                if menuline[1]:
+                    action.setShortcut(menuline[1])
+                self.actionFile.addAction(action)
+
+
+
+        self.overallverticallayout.addWidget(menubar)
 
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.verticalLayout0 = QtWidgets.QVBoxLayout() 
@@ -202,11 +214,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 prompt = dlg.exec()
 
 
-
-
                 if prompt == QMessageBox.Yes:
                     nc_loading = True
-                    self.loginprompt = LoginPrompt(load_mandate,self.nc_mandatefilepath)
+                    def try_logging_in_f(user,pw):
+                        print(f"try logging in nextcloud with user: {user} und pw: {pw}")
+                        # nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
+                        nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=user,
+                                                nc_auth_pass=pw)
+                        # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
+                        nc_instance.capabilities
+                        load_mandate(self.nc_mandatefilepath, nc_loading=True, nc_instance=nc_instance)
+                    self.loginprompt = LoginPrompt(try_logging_in_f)
                     self.loginprompt.show()
                 else:
                     nc_loading = False
@@ -423,6 +441,16 @@ class MainWindow(QtWidgets.QMainWindow):
                             ["Lade Daten von SEPA Mandate", "", import_mandates],
                             ["Exportiere .csv Datei für Raiffeisen Infinty", "", export_csv]]
         return menubardata
+
+    def init_menubardata_new_member(self):
+        def load_Mail():
+            print("Load Mail")
+            mail_adress = "info@gemeinwohlenergie-innsbruck.at"
+            pw = "MnAE4SssEvb4Dm"
+            mailserver = "mail.your-server.de"
+        menubardata = [["Wähle eine Mail aus", "", load_Mail]]
+        return menubardata
+
 
 
 def main():
