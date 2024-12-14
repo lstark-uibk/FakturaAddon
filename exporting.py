@@ -17,6 +17,26 @@ import datetime as dt
 def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
     debit = invoices_selected_persons[(invoices_selected_persons["Dokumenttyp"] == "Rechnung")]
     transfer = invoices_selected_persons[(invoices_selected_persons["Dokumenttyp"] == "Gutschrift")|(invoices_selected_persons["Dokumenttyp"] == "Information")]
+    debitdoubles = debit["Empfänger Name"][debit["Empfänger Name"].isin(transfer["Empfänger Name"])].index
+    transferdoubles = transfer["Empfänger Name"][transfer["Empfänger Name"].isin(debit["Empfänger Name"])].index
+    doublesprocess = {"Name":[],"Debit":[],"Transfer":[],"Type":[],"Final":[]}
+    for i,j in zip(debitdoubles,transferdoubles):
+        doublesprocess["Name"].append(debit.loc[i,"Empfänger Name"])
+        doublesprocess["Debit"].append(debit.loc[i,"Rechnungsbetrag Brutto"])
+        doublesprocess["Transfer"].append(transfer.loc[j,"Rechnungsbetrag Brutto"])
+        if debit.loc[i,'Rechnungsbetrag Brutto'] < transfer.loc[j,'Rechnungsbetrag Brutto']:
+            finalsum = transfer.loc[j,'Rechnungsbetrag Brutto'] - debit.loc[i,'Rechnungsbetrag Brutto']
+            transfer.loc[j, 'Rechnungsbetrag Brutto'] = finalsum
+            debit = debit.drop(i)
+            doublesprocess["Type"].append("Überweisung")
+            doublesprocess["Final"].append(finalsum)
+
+        else:
+            finalsum = debit.loc[i,'Rechnungsbetrag Brutto'] - transfer.loc[j,'Rechnungsbetrag Brutto']
+            debit.loc[i, 'Rechnungsbetrag Brutto'] = finalsum
+            transfer = transfer.drop(j)
+            doublesprocess["Type"].append("Lastschrift")
+            doublesprocess["Final"].append(finalsum)
 
 
     def create_one_line_debit(invoicelistline,creditor_ID,mandates,type = debit):
@@ -91,13 +111,13 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
 
 
     serieslist = []
-    missingmandats = []
+    missingmandates = []
     for index, line in debit.iterrows():
         exportline,matchingmandate = create_one_line_debit(line,creditor_ID,mandates,type="debit")
         if exportline is not None:
             serieslist.append(exportline)
             if not matchingmandate:
-                missingmandats.append(f"{line['Empfänger Vorame']} {line['Empfänger Nachname']}")
+                missingmandates.append(f"{line['Empfänger Vorame']} {line['Empfänger Nachname']}")
     debitexport = pd.concat(serieslist, axis=1).T
 
     serieslist = []
@@ -106,7 +126,7 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
         if exportline is not None:
             serieslist.append(exportline)
     transferexport = pd.concat(serieslist, axis=1).T
-    return debitexport,transferexport, missingmandats
+    return debitexport,transferexport, missingmandates, doublesprocess
 
 
 # base_dir = current_directory = os.getcwd()

@@ -189,8 +189,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.mandatesdata_loaded = True
                 else:
                     return None
-            filepath = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
-
+            # filepath = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
+            filepath=""
             if not filepath:
                 print("Import mandates")
                 dlg = QMessageBox(self)
@@ -217,8 +217,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def import_invoice_data():
             print("import invoice data")
-            filepath = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
-            # filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
+            # filepath = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
+            filepath = load_filepath("Importiere Rechnungen von EEG Faktura")
             if filepath is not None:
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechnungsdaten"].index, "Speicherort"] = filepath
 
@@ -334,14 +334,23 @@ class MainWindow(QtWidgets.QMainWindow):
                     print(self.invoices.data["list"].loc[selected_names])
                     invoices_selected_names = self.invoices.data["list"].loc[selected_names]
 
-                    exportingdebit,exportingtransfer, missingmandates = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
-                    print(missingmandates)
+                    exportingdebit,exportingtransfer, missingmandates,doublesprocess = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
+                    if doublesprocess["Name"]:
+                        print("we merged doubes")
+                        dlg = QMessageBox(self)
+                        questiontext = f"Für folgende Personen gibt es sowohl Überweisungsdaten und Lastschriftdaten. Diese werden zusammengeführt:\n\n"
+                        for i in range(0,len(doublesprocess["Name"])):
+                            questiontext += f"{doublesprocess["Name"][i]}: Lastschrift: {doublesprocess["Debit"][i]}€, Überweisung: {doublesprocess["Transfer"][i]}€ --> {doublesprocess["Type"][i]} mit {doublesprocess["Final"][i]}€ \n"
+                        dlg.setText(questiontext)
+                        prompt = dlg.exec()
+
+
                     if missingmandates:
                         dlg = QMessageBox(self)
                         questiontext = f"Für folgende Personen gibt es Daten zur Lastschrift, aber keine Daten zu einem Mandat:\n\n"
                         for name in missingmandates:
                             questiontext += f"{name} \n"
-                        questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen."
+                        questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen.)"
 
                         dlg.setText(questiontext)
                         dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
