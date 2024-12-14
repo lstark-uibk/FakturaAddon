@@ -1,8 +1,8 @@
 from time import sleep
-import numpy as np
+from nc_py_api import Nextcloud
 import pandas as pd
 import os
-import subwindows as sw
+from subwindows import LoginPrompt, Subwindow
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
@@ -80,6 +80,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                   "Speicherort":["","",""],
 
                                               })
+        self.loginprompt = None
+        self.nc_auth_user = ''
+        self.nc_auth_pass = ''
         self.creditor_ID = "AT94ZZZ00000079821"
         self.nc_mandatefilepath = "Gemeinwohlenergie/Rechnungswesen, IT/Abrechnung Faktura/SEPA Lastschriftmandate/lastschriftmandate.xlsx"
         self.mandatesdata_loaded = False
@@ -183,20 +186,28 @@ class MainWindow(QtWidgets.QMainWindow):
             dlg.setText(questiontext)
             dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             prompt = dlg.exec()
+
+            def load_mandate(filepath,nc_loading=False,nc_instance=""):
+                if filepath is not None:
+                    mandatedata = self.mandates.load_data(filepath,nc = nc_loading,nc_instance=nc_instance)
+                    if mandatedata is not None:
+                        self.reload_table_view("0_1",mandatedata)
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
+                        updatetable_1_1()
+                        self.mandatesdata_loaded = True
+                else:
+                    return None
+
+
             if prompt == QMessageBox.Yes:
                 nc_loading = True
-                filepath = self.nc_mandatefilepath
+                self.loginprompt = LoginPrompt(load_mandate,self.nc_mandatefilepath)
+                self.loginprompt.show()
             else:
                 nc_loading = False
                 filepath = load_filepath("Lade Daten von SEPA Mandate")
+                load_mandate(filepath)
 
-            if filepath is not None:
-                mandatedata = self.mandates.load_data(filepath,nc = nc_loading)
-                if mandatedata is not None:
-                    self.reload_table_view("0_1",mandatedata)
-                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
-                    updatetable_1_1()
-                    self.mandatesdata_loaded = True
 
         def import_invoice_data():
             print("import invoice data")
@@ -246,7 +257,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     return None
 
-                self.exportwindow = sw.Subwindow("Exportiere .csv für SEPA")
+                self.exportwindow = Subwindow("Exportiere .csv für SEPA")
                 self.exportwindow.resize(500, 500)
                 self.exportwindow.move(30, 30)
                 self.exportwindow.verticalLayout = QVBoxLayout()

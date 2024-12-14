@@ -2,7 +2,6 @@ from tempfile import template
 import datetime as dt
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from nc_py_api import Nextcloud
 from io import BytesIO
 
 
@@ -22,7 +21,7 @@ class Data():
         self.template_for_export = self.f_load_template(filepath1,filepath2 = filepath2)
         return self.template_for_export
 
-def load_mandates(filepath,nc =True):
+def load_mandates(filepath,nc =True, nc_instance = ''):
     print(f"Load {filepath}")
     if not nc:
         try:
@@ -34,13 +33,7 @@ def load_mandates(filepath,nc =True):
             return
     else:
         print("Nextcloud loading")
-        nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
-        nc_auth_user = 'Leander'
-        nc_auth_pass = 'BnmgNB3VFO6s29'
-
-        nc = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=nc_auth_user, nc_auth_pass=nc_auth_pass)
-
-        mandates = nc.files.download(filepath)
+        mandates = nc_instance.files.download(filepath)
         mandates = pd.read_excel(BytesIO(mandates), engine='openpyxl')
         print(mandates)
     try:

@@ -1,5 +1,8 @@
 import PyQt5.QtWidgets as QtWidgets
-from PyQt5.QtWidgets import QMainWindow
+import PyQt5.QtGui as QtGui
+from nc_py_api import Nextcloud
+
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
 import sys
 
 
@@ -45,7 +48,74 @@ class Subwindow(QMainWindow):
 
 # class Selectfromnextcloudwindow():
     #https: // pythonspot.com / pyqt5 - directory - view /
+class LoginPrompt(QWidget):
+    """
+    This "window" is a QWidget. If it has no parent, it
+    will appear as a free-floating window as we want.
+    """
+    def __init__(self,load_mandates,nc_filepath):
+        super().__init__()
+        self.setWindowTitle("Nextcloud Login")
 
+        print("Login Prompt")
+        self.load_mandates = load_mandates
+        self.nc_fp = nc_filepath
+        self.resize(200, 100)
+        self.move(300,300)
+        layout = QVBoxLayout()
+        label = QLabel("Nextcloud Login")
+        self.user = QLineEdit()
+        self.pw = QLineEdit()
+        self.pw.setEchoMode(QLineEdit.Password)
+        line1 = QHBoxLayout()
+        line1.addWidget(QLabel("Benutzername"))
+        line1.addWidget(self.user)
+        line2 = QHBoxLayout()
+        line2.addWidget(QLabel("Passwort"))
+        line2.addWidget(self.pw)
+        okbutton = QPushButton("OK")
+        okbutton.pressed.connect(self.okbuttonpress)
+        self.status = QLabel("")
+
+        layout.addWidget(label)
+        layout.addLayout(line1)
+        layout.addLayout(line2)
+        layout.addWidget(okbutton)
+        layout.addWidget(self.status)
+
+        self.setLayout(layout)
+
+    def okbuttonpress(self):
+        print("ok")
+        if self.user.text():
+            user = self.user.text()
+            print("user text eingegeben")
+            print(self.user.text())
+            if self.pw.text():
+                pw = self.pw.text()
+                print("pw text eingegeben")
+                print(self.pw.text())
+
+                try:
+                    print(f"try logging in nextcloud with user: {user} und pw: {pw}")
+                    nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
+                    nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=user,
+                                                 nc_auth_pass=pw)
+                    # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
+                    nc_instance.capabilities
+                    self.load_mandates(self.nc_fp,nc_loading=True,nc_instance=nc_instance)
+                except Exception as error:
+                    print("Try again")
+                    self.status.setText(f"Anmeldung hat nicht funktioniert \nRückmeldung: {error} \nCheck die Internet Verbindung oder deine Eingabedaten")
+                    return
+
+
+                self.close()
+            else:
+                self.status.setText("Passwort fehlt")
+
+        else:
+            self.status.setText("Benutzname fehlt")
 
 
 
