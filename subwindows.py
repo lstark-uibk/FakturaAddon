@@ -1,8 +1,13 @@
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
-from nc_py_api import Nextcloud
+from matplotlib.pyplot import title
+from bs4 import BeautifulSoup
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from nc_py_api import Nextcloud
+import imaplib
+import email
+from email.header import decode_header
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QListWidget, QTextEdit, QFormLayout, QScrollArea
 import sys
 
 
@@ -46,20 +51,17 @@ class Subwindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
 
-# class Selectfromnextcloudwindow():
-    #https: // pythonspot.com / pyqt5 - directory - view /
 class LoginPrompt(QWidget):
     """
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
     """
-    def __init__(self,load_mandates,nc_filepath):
+    def __init__(self,function_try_login,title = ""):
         super().__init__()
-        self.setWindowTitle("Nextcloud Login")
+        self.setWindowTitle(title)
 
         print("Login Prompt")
-        self.load_mandates = load_mandates
-        self.nc_fp = nc_filepath
+        self.function_try_login = function_try_login
         self.resize(200, 100)
         self.move(300,300)
         layout = QVBoxLayout()
@@ -97,13 +99,8 @@ class LoginPrompt(QWidget):
                 print(self.pw.text())
 
                 try:
-                    print(f"try logging in nextcloud with user: {user} und pw: {pw}")
-                    nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
-                    nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=user,
-                                                 nc_auth_pass=pw)
-                    # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
-                    nc_instance.capabilities
-                    self.load_mandates(self.nc_fp,nc_loading=True,nc_instance=nc_instance)
+
+                    self.function_try_login(user,pw)
                 except Exception as error:
                     print("Try again")
                     self.status.setText(f"Anmeldung hat nicht funktioniert \nRückmeldung: {error} \nCheck die Internet Verbindung oder deine Eingabedaten")
@@ -117,133 +114,190 @@ class LoginPrompt(QWidget):
         else:
             self.status.setText("Benutzname fehlt")
 
+class MailSelection(QWidget):
+    """
+    This "window" is a QWidget. If it has no parent, it
+    will appear as a free-floating window as we want.
+    """
+    def __init__(self,title = "",imap = "",functiononnewmemberparse=""):
+        super().__init__()
+        self.setWindowTitle(title)
+
+        print("Login Prompt")
+        self.resize(800, 400)
+        self.move(200,200)
+        self.imap = imap
+        self.functiononnewmemberparse = functiononnewmemberparse
+        layout = QVBoxLayout()
+        self.email_list = QListWidget()
+        self.nr_messagesperpage = 15
+        self.start = 0
+        self.finish = self.start+self.nr_messagesperpage
+        status, messages = self.imap.select("INBOX")
+        self.nr_messages = int(messages[0])  # total number of emails
+        self.Mailcheckwindow = None
+
+        # email_subjects = self.get_mail_subjects(self.start,self.finish)
+        # self.reload_list(email_subjects)
+        mailmessage = self.get_mail_messages(2,anmeldungstyp="Produzent:in")
 
 
-#
-# class MainWindow(QtWidgets.QMainWindow):
-#     def __init__(self, *args, **kwargs):
-#         super(MainWindow, self).__init__(*args, **kwargs)
-#         print("Initializing Window")
-#         self.setWindowTitle("Faktura Infinity Addon")
-#
-#         self.init_Ui_file_not_loaded()
-#
-#     def init_Ui_file_not_loaded(self):
-#         self.centralwidget = QtWidgets.QWidget(self)
-#         # main layout setup
-#         self.overallverticallayout = QtWidgets.QVBoxLayout(self.centralwidget)
-#         self.horizontalLayout = QtWidgets.QHBoxLayout()
-#         self.verticalLayout0 = QtWidgets.QVBoxLayout()  # layout on the left with the masslist, and other stuff
-#         self.verticalLayout1 = QtWidgets.QVBoxLayout()  # laout on the right with the graph
-#         self.table_0_0 = TableView()
-#         self.table_0_1 = TableView()
-#         self.creditor_ID_layout = QtWidgets.QHBoxLayout()
-#         self.creditor_ID_label = QtWidgets.QLabel()
-#         self.table_1_0 = TableView()
-#
-#         self.horizontalLayout.addLayout(self.verticalLayout0)
-#         self.horizontalLayout.addLayout(self.verticalLayout1)
-#         self.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
-#         self.verticalLayout0.addWidget(self.table_0_0)
-#         self.verticalLayout0.addWidget(QLabel("Mandatsdaten KonsumentInnen"))
-#         self.verticalLayout0.addWidget(self.table_0_1)
-#         self.verticalLayout0.addLayout(self.creditor_ID_layout)
-#         self.creditor_ID_layout.addWidget(QtWidgets.QLabel("Creditor ID:"))
-#         self.creditor_ID_layout.addWidget(self.creditor_ID_label)
-#         self.verticalLayout0.setStretch(1, 7)
-#         self.verticalLayout0.setStretch(3, 7)
-#
-#
-#         # plot widget for the verticalLayout1
-#         self.verticalLayout1.addWidget(QLabel("Rechnungsdaten ProduzentInnen"))
-#         self.verticalLayout1.addWidget(self.table_1_0)
-#
-#         menubar = QtWidgets.QMenuBar()
-#         self.actionFile = menubar.addMenu("Datei")
-#         # the po.importanythingact triggers init_UI_file_loaded() and init_plots()
-#         importanythingact = QtWidgets.QAction("Importieren", self)
-#         importanythingact.setShortcut("Ctrl+I")
-#         importanythingact.triggered.connect(self.importanything)
-#         makeinvact = QtWidgets.QAction("Rechnungen erstellen", self)
-#         makeinvact.triggered.connect(self.makeinvoice)
-#         makeinfexpact = QtWidgets.QAction("Für Infinity vorbereiten", self)
-#         makeinfexpact.triggered.connect(self.makeinfexport)
-#         mailingact = QtWidgets.QAction("Emails Senden", self)
-#         mailingact.triggered.connect(self.mailingselect)
-#         self.actionFile.addAction(importanythingact)
-#         self.actionFile.addAction(makeinvact)
-#         self.actionFile.addAction(makeinfexpact)
-#         self.actionFile.addAction(mailingact)
-#
-#
-#         self.actionFile.addSeparator()
-#         quit = QtWidgets.QAction("Schließen", self)
-#         quit.setShortcut("Alt+F4")
-#         quit.triggered.connect(lambda: sys.exit(0))
-#         self.actionFile.addAction(quit)
-#
-#         self.overallverticallayout.addWidget(menubar)
-#         self.overallverticallayout.addLayout(self.horizontalLayout)
-#         self.setCentralWidget(self.centralwidget)
-#
-#
-#
-#     def importanything(self):
-#         print("Import Action")
-#         dlg = ImportDialog(self)
-#         dlg.exec()
-#
-#     def makeinvoice(self):
-#         print("Invoice Action")
-#         # auswählen wohin und welches format
-#
-#     def makeinfexport(self):
-#         print("Inf exp action")
-#         # zeige für welche kundInnen kein sepa mandat vorhanden
-#
-#     def mailingselect(self):
-#         print("Send Mails")
-#         # auswählen an wen (woher bekommen wir die mail daten?)
-#
-#         # dialog = QtWidgets.QFileDialog()
-#         # filepath, filter = dialog.getimportanythingactName(None, "Window name", "", "HDF5_files (*.hdf5)")
-#         # self.filename = filepath
-#         # # if self.file_loaded:
-#         # #     print("remove old plot stuff")
-#         # #     pyqtgraph_objects.remove_all_plot_items(parent)
-#         # self.init_basket_objects()
-#         # self.init_UI_file_loaded()
-#         # self.init_plots()
-#         # self.file_loaded = True
-#
-#     def init_basket_objects(self):
-#         # those are the "basket" objects, where the data is in sp = all data that has to do with the spectrum, ml = all data to the masslist
-#
-#         self.plot_settings = {"vert_lines_color_suggestions": (97, 99, 102, 70),
-#                               "vert_lines_color_masslist": (38, 135, 20),
-#                               "vert_lines_color_masslist_without_composition": (13, 110, 184),
-#                               "vert_lines_color_isotopes": (252, 3, 244, 70),
-#                               # RGB tubel and last number gives the transparency (from 0 to 255)
-#                               "vert_lines_width_suggestions": 1,
-#                               "vert_lines_width_masslist": 2,
-#                               "vert_lines_width_isotopes": 1.5,
-#                               "average_spectrum_color": (252, 49, 3),
-#                               "max_spectrum_color": (122, 72, 6, 80),
-#                               "min_spectrum_color": (11, 125, 191, 80),
-#                               "sub_spectrum_color": (103, 42, 201, 80),
-#                               "color_cycle": ['r', 'g', 'b', 'c', 'm', 'y'],
-#                               "current_color": 0,
-#                               "current_color_fixed": 0,
-#                               "background_color": "w",
-#                               "show_plots": [True, False, False, False],
-#                               # plots corresponding to [avg spectrum, min spec, max spect, subspectr]
-#                               "avg": False,
-#                               "raw": True
-#                               }
-#
-#
-#     def init_UI_file_loaded(self):
-#         pass
-#
-#     def init_plots(self):
-#         pass
+        self.moredown = QPushButton("Mehr")
+        self.moredown.pressed.connect(lambda: self.load_more_messages("down") )
+        self.moreup = QPushButton("Mehr")
+        self.moreup.pressed.connect(lambda: self.load_more_messages("up") )
+        self.status = QLabel("")
+        self.okbut = QPushButton("OK")
+        self.okbut.pressed.connect(lambda: self.confirm_selection(self.email_list.currentItem()))
+
+        layout.addWidget(self.moreup)
+        layout.addWidget(self.email_list)
+        layout.addWidget(self.moredown)
+        layout.addWidget(self.status)
+        layout.addWidget(self.okbut)
+
+        self.setLayout(layout)
+        self.email_list.itemDoubleClicked.connect(self.confirm_selection)
+    def load_more_messages(self,dir = "down"):
+        if dir == "down":
+            if self.start + self.nr_messagesperpage >= 0:
+                self.start = self.start + self.nr_messagesperpage
+                self.finish = self.finish + self.nr_messagesperpage
+            else: return
+        if dir == "up":
+            if self.start - self.nr_messagesperpage >= 0:
+                self.start = self.start - self.nr_messagesperpage
+                self.finish = self.finish - self.nr_messagesperpage
+            else: return
+        email_subjects= self.get_mail_subjects(self.start,self.finish)
+        self.reload_list(email_subjects)
+
+    def reload_list(self,email_subjects):
+        self.email_list.clear()
+        for subject, sender in email_subjects:
+            self.email_list.addItem(f"{sender}:\t{subject}")
+    def confirm_selection(self,item):
+        if item:
+            if ('Neuanmeldung Stromkonsument:in' in item.text()):
+                anmeldungstyp = "Konsument:in"
+            elif ('Neuanmeldung Stromproduzent:in' in item.text()):
+                anmeldungstyp = "Produzent:in"
+            else:
+                self.status.setText("Email war keine Neuanmeldung")
+
+                return
+            print(type(self.email_list.row(item)),item.text())
+            row = self.email_list.row(item)
+            message = self.get_mail_messages(row,anmeldungstyp)
+            self.close()
+        else:
+            print("No item selected")
+            self.status.setText("Kein Email ausgewählt")
+    def get_mail_messages(self,nrmailfromtop,anmeldungstyp):
+        res, msg = self.imap.fetch(str(self.nr_messages - nrmailfromtop), "(RFC822)")
+        for response in msg:
+            if isinstance(response, tuple):
+                # parse a bytes email into a message object
+                msg = email.message_from_bytes(response[1])
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        # extract content type of email
+                        content_type = part.get_content_type()
+                        try:
+                            # get the email body
+                            body = part.get_payload(decode=True).decode()
+                        except:
+                            pass
+                        if content_type == "text/plain":
+                            # print text/plain emails and skip attachments
+                            print(body)
+        self.Mailcheckwindow = MailCheckWindow(body,title="Datencheck", functionnewmemberparse = self.functiononnewmemberparse, anmeldungstyp=anmeldungstyp)
+        self.Mailcheckwindow.show()
+        self.close()
+        return body
+
+    def get_mail_subjects(self,start,finish):
+        email_subjects = []
+
+        for i in range(self.nr_messages-start, self.nr_messages - finish, -1):
+            # fetch the email message by ID
+            res, msg = self.imap.fetch(str(i), "(RFC822)")
+            # print(res,msg)
+            for response in msg:
+                if isinstance(response, tuple):
+                    # parse a bytes email into a message object
+                    msg = email.message_from_bytes(response[1])
+                    # decode the email subject
+                    subject, encoding = decode_header(msg["Subject"])[0]
+                    if isinstance(subject, bytes):
+                        # if it's a bytes, decode to str
+                        subject = subject.decode(encoding)
+                    # decode email sender
+                    From, encoding = decode_header(msg.get("From"))[0]
+                    if isinstance(From, bytes):
+                        From = From.decode(encoding)
+                    email_subjects.append([subject, From])
+
+        return email_subjects
+
+class MailCheckWindow(QWidget):
+    def __init__(self,mailtext,title = "", functionnewmemberparse="",anmeldungstyp = ""):
+        self.anmeldungstyp = anmeldungstyp
+        self.functionnewmemberparse = functionnewmemberparse
+        super().__init__()
+        self.setWindowTitle(title)
+        self.resize(1000, 600)
+        self.move(30,30)
+        self.mailtext = mailtext
+        self.parsed_data = {}
+        self.parse_text()
+        layout = QVBoxLayout()
+        hlayout1 = QHBoxLayout()
+        hlayout2 = QHBoxLayout()
+        self.mailtext_window = QTextEdit(mailtext)
+        self.mailtext_window.setReadOnly(True)
+        self.scroll = QScrollArea()             # Scroll Area which contains the widgets, set as the centralWidget
+        self.widget = QWidget()
+        self.parsedatawindow = QFormLayout()
+        for key in self.parsed_data:
+            self.parsedatawindow.addRow(key,QLineEdit(self.parsed_data[key]))
+
+        self.widget.setLayout(self.parsedatawindow)
+
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(self.widget)
+
+        self.okbut = QPushButton("OK")
+        self.okbut.pressed.connect(self.collect_parsed)
+
+        layout.addLayout(hlayout1)
+        layout.addLayout(hlayout2)
+        hlayout1.addWidget(QLabel(f"Email zur Anmeldung von {self.anmeldungstyp}:"))
+        hlayout2.addWidget(self.mailtext_window)
+        hlayout1.addWidget(QLabel("Daten aus Email geparsed"))
+        hlayout2.addWidget(self.scroll)
+        hlayout1.setStretch(0,1)
+        hlayout1.setStretch(1,2)
+        hlayout2.setStretch(0,1)
+        hlayout2.setStretch(1,2)
+
+        layout.addWidget(self.okbut)
+        self.setLayout(layout)
+
+    def parse_text(self):
+        soup = BeautifulSoup(self.mailtext, "html.parser")
+
+        # Extract text content split by <br> tags
+        lines = [line.strip() for line in soup.get_text(separator='\n').split('\n') if line.strip()]
+
+        for line in lines:
+            if ' : ' in line:
+                key, value = line.split(' : ', 1)  # Split into key and value
+                self.parsed_data[key.strip()] = value.strip()
+
+    def collect_parsed(self):
+        print("I continue with the parsed email")
+        self.parsed_data["Anmeldungstyp"] = self.anmeldungstyp
+        self.functionnewmemberparse(data = self.parsed_data)
+        print(self.parsed_data)
+        self.close()

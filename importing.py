@@ -3,6 +3,7 @@ import datetime as dt
 import pandas as pd
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from io import BytesIO
+from openpyxl import load_workbook
 
 
 # mandate =pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
@@ -14,14 +15,14 @@ class Data():
 
         self.data = []
         self.template_for_export = []
-    def load_data(self,filepath,**kwargs):
-        self.data = self.f_load_data(filepath,**kwargs)
+    def load_data(self,**kwargs):
+        self.data = self.f_load_data(**kwargs)
         return self.data
-    def load_template(self,filepath1,filepath2 = ''):
-        self.template_for_export = self.f_load_template(filepath1,filepath2 = filepath2)
+    def load_template(self,**kwargs):
+        self.template_for_export = self.f_load_template(**kwargs)
         return self.template_for_export
 
-def load_mandates(filepath,nc =False, nc_instance = ''):
+def load_mandates(filepath='',nc =False, nc_instance = ''):
     print(f"Load {filepath}")
     if not nc:
         try:
@@ -55,7 +56,7 @@ def load_mandate_template(filepath_lastschrift, filepath2= ''):
     return templates
 
 
-def load_invoices(filepath,nc = False):
+def load_invoices(filepath='',nc = False):
     print(filepath)
     if not nc:
         try:
@@ -86,16 +87,52 @@ def load_mail_adresses(filepath):
 def load_mail_template(filepath):
     print("Email Template")
     print(filepath)
+def load_new_member_data(data= []):
+    return data
+
+def load_faktura_member_export_template(filepath = "",nc =False, nc_instance = ''):
+    print(f"Load {filepath}")
+    if not nc:
+        try:
+            template = load_workbook(filename = filepath)
+            print(template)
+        except:
+            errorbox = QMessageBox()
+            errorbox.setText("Ausgewählte Date ist nicht lesbar (ist sie im richtigen Format?)")
+            errorbox.exec_()
+            return
+    else:
+        print("Nextcloud loading")
+        template = nc_instance.files.download(filepath)
+        template = load_workbook(BytesIO(template))
+        print(template)
+    return template
+
+
+def load_filepath(parent, title, filter="Excel (*.xlsx)", fileex=True, homedir = ""):
+    print("Lokal")
+    if fileex:
+        filepath, filter = QFileDialog.getOpenFileName(parent, title, homedir, filter)
+    else:
+        filepath, filter = QFileDialog.getSaveFileName(parent, title, homedir, filter)
+    if filepath:
+        return filepath
+    else:
+        return None
+
 
 mandates = Data(load_mandates,load_mandate_template)
 invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
+newmember = Data(load_new_member_data,load_faktura_member_export_template)
 
 template_debit = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Lastschriften.csv"
 template_transfer = "/home/leander/gei/faktura/pythonProject/data/Musterdatei Import Überweisungen.csv"
 datamandate = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
 datainvoices = "/home/leander/gei/faktura/pythonProject/data/CC100438_abrechnung_final.xlsx"
+fakturaexport = "/home/leander/gei/faktura/stammdaten_import/241206-vorlage-import-stammdaten_ls.xlsx"
 
 # mandates.load_template(template_debit,template_transfer)
-mandates.load_data(datamandate)
-invoices.load_data(datainvoices)
+# mandates.load_data(datamandate)
+# invoices.load_data(datainvoices)
+newmember.load_template(filepath = fakturaexport)
