@@ -1,20 +1,17 @@
-from time import sleep
-
-from matplotlib.pyplot import title
-
 from nc_py_api import Nextcloud
 import pandas as pd
 import os
-from subwindows import LoginPrompt, Subwindow, MailSelection
+from subwindows import  Subwindow
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
-from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QGridLayout, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout
-from importing import mandates,invoices,emails, newmember, load_filepath
-from exporting import produce_sepa_export_dfs
+from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QGridLayout, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout, QDialog
+from importing import mandates,invoices,emails, masterdata,energydata,load_filepath, check_whether_data_exists
+from exporting import produce_sepa_export_dfs, produce_invoices_and_save
 from PyQt5.QtWidgets import QHBoxLayout
 import datetime as dt
 import imaplib
+from emailing import MailSelection, LoginPrompt, selectmail, MailAdressSelection, Sendapproval, send_mail_to_one_person
 import email
 from email.header import decode_header
 
@@ -22,30 +19,42 @@ from email.header import decode_header
 
 
 class TableView(QtWidgets.QTableWidget):
-    def __init__(self, data={"1":[0]}, *args):
+    def __init__(self, data=pd.DataFrame([]), editable = False, clickable = False, *args):
         QtWidgets.QTableWidget.__init__(self, *args)
-        self.data = data
-        self.setData()
+        self.data = data.to_dict(orient="list")
+        rowcount = data.shape[0]
+        self.functions_on_row_clicked = [0]*rowcount
+        self.set_new_data(data, editable = editable)
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
-    def set_new_data(self,data):
-        """
-        sets the Table to new data
-        :param data: pd.Dataframe
-        :return:
-        """
+        if clickable:
+            self.itemClicked.connect(self.on_item_clicked)
+    def set_new_data(self,data, editable = False):
         self.data = data.to_dict(orient="list")
-        self.setData(data.shape[0],data.shape[1])
-    def setData(self,rowcount = 0, colcount = 0):
+        self.setData(data.shape[0],data.shape[1], editable= editable)
+    def setData(self,rowcount = 0, colcount = 0, editable = False):
         self.setColumnCount(colcount)
         self.setRowCount(rowcount)
-        horHeaders = []
+        row_names = []
         for n, key in enumerate(self.data.keys()):
-            horHeaders.append(key)
+            row_names.append(key)
             for m, item in enumerate(self.data[key]):
                 newitem = QtWidgets.QTableWidgetItem(str(item))
+                if not editable:
+                    newitem.setFlags(newitem.flags() & ~Qt.ItemIsEditable)  # Remove the editable flag
                 self.setItem(m, n, newitem)
-        self.setHorizontalHeaderLabels(horHeaders)
+
+        self.setHorizontalHeaderLabels(row_names)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+    def on_item_clicked(self, item):
+        row_clicked = item.row()
+        try:
+            self.functions_on_row_clicked[row_clicked]()
+        except Exception as Error:
+            print("Could not run the function for this row.")
+            print(Error)
+
 
 
 # class ImportDialog(QtWidgets.QDialog):
@@ -83,11 +92,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.second_window = None
         self.exportwindow = None
         self.home_directory = "/home/leander/gei"
-        self.loaded_filepaths = pd.DataFrame({"Daten":["Mandate","Rechnungsdaten","Vorlage EEG Faktura Stammdaten Import",],
-                                  "Speicherort":["","",""],
-
+        paths_datanames = ["Mandate","Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","Vorlage EEG Faktura Stammdaten Export","Rechnungen Vorlage", "Emails Vorlage"]
+        self.loaded_filepaths = pd.DataFrame({"Daten":paths_datanames,
+                                  "Speicherort":["Auswählen","Auswählen","Auswählen","Auswählen","/home/leander/gei/faktura/230913-vorlage-import-stammdaten-1.xlsx","/home/leander/gei/faktura/pythonProject/template_invoice.docx","Auswählen"],
                                               })
         # promptwindows
+
         self.loginprompt = None
         self.mailselectionprompt = None
         #nc credits
@@ -96,6 +106,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.nc_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
         self.nc_mandatefilepath = "Gemeinwohlenergie/Rechnungswesen, IT/Abrechnung Faktura/SEPA Lastschriftmandate/lastschriftmandate.xlsx"
         #email data
+        # self.my_mail = "leander@gemeinwohlenergie-innsbruck.at"
+        self.my_mail = "info@gemeinwohlenergie-innsbruck.at"
+
+        self.my_mail_pw = "MnAE4SssEvb4Dm"
+        # self.my_mail_pw = "iKeDMX2x5VzDiz"
         self.imap_server = "mail.your-server.de"
         self.nc_faktura_export_template_fp = "Gemeinwohlenergie/Mitgliederverwaltung/Faktura Mitgliederstammdaten Upload Template/241206-vorlage-import-stammdaten_ls.xlsx"
 
@@ -103,8 +118,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.GEI_gemeinschafts_ID = "ATCC9999DYNAMCC100438000000000249"
         self.mandatesdata_loaded = False
         self.invoicesdata_loaded = False
-        self.init_Ui()
+        self.thisinvoices_year = ""
+        self.thisinvoice_quart = ""
+        self.safepath_this_invoices = ""
         self.init_data()
+        self.init_Ui()
+
 
     def init_Ui(self):
         self.centralwidget = QtWidgets.QWidget(self)
@@ -136,6 +155,16 @@ class MainWindow(QtWidgets.QMainWindow):
                     action.setShortcut(menuline[1])
                 self.actionFile.addAction(action)
 
+        self.menubardata_Make_invoices= self.init_menubardata_make_invoices()
+        if self.menubardata_Make_invoices:
+            self.actionFile = menubar.addMenu("Rechnungen erstellen und verschicken")
+            for menuline in self.menubardata_Make_invoices:
+                action = QtWidgets.QAction(menuline[0], self)
+                action.triggered.connect(menuline[2])
+                if menuline[1]:
+                    action.setShortcut(menuline[1])
+                self.actionFile.addAction(action)
+
 
 
         self.overallverticallayout.addWidget(menubar)
@@ -149,8 +178,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.table_0_0 = TableView()
         self.table_0_1 = TableView()
         self.table_1_0 = TableView()
-        self.table_1_1 = TableView()
-        self.table_1_1.set_new_data(self.loaded_filepaths)
+        self.table_1_1 = TableView(self.loaded_filepaths,clickable=True)
+        self.init_loading_functionality(self.table_1_1)
+
         self.horizontalLayout.addLayout(self.verticalLayout1)
         self.horizontalLayout.addLayout(self.verticalLayout0)
         self.verticalLayout0.addWidget(QLabel("Rechnungsdaten KonsumentInnen"))
@@ -178,25 +208,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mandates = mandates
         self.invoices = invoices
         self.emails = emails
-        self.new_member = newmember
-    
-    def init_menubardata_mandates(self):
+        self.masterdata = masterdata
+        self.energydata = energydata
+
+
+    def init_loading_functionality(self,table_widget_in_which_loading_is_done):
 
         def updatetable_1_1():
-            self.table_1_1.set_new_data(self.loaded_filepaths.iloc[0:3])
+            table_widget_in_which_loading_is_done.set_new_data(self.loaded_filepaths)
 
+        def load_mandate_from_fp(filepath, nc_loading=False, nc_instance=""):
+            if filepath is not None:
+                mandatedata = self.mandates.load_data(filepath=filepath, nc=nc_loading, nc_instance=nc_instance)
+                if mandatedata is not None:
+                    self.reload_table_view("0_1", mandatedata)
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                        self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
+                    updatetable_1_1()
+                    self.mandatesdata_loaded = True
+            else:
+                return None
         def import_mandates(filepath = ''):
-            def load_mandate(filepath, nc_loading=False, nc_instance=""):
-                if filepath is not None:
-                    mandatedata = self.mandates.load_data(filepath=filepath, nc=nc_loading, nc_instance=nc_instance)
-                    if mandatedata is not None:
-                        self.reload_table_view("0_1", mandatedata)
-                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
-                            self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
-                        updatetable_1_1()
-                        self.mandatesdata_loaded = True
-                else:
-                    return None
+
             # filepath = "/home/leander/gei/export_infinity/lastschriftmandate.xlsx"
             filepath=""
             if not filepath:
@@ -218,18 +251,19 @@ class MainWindow(QtWidgets.QMainWindow):
                                                 nc_auth_pass=pw)
                         # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
                         nc_instance.capabilities
-                        load_mandate(self.nc_mandatefilepath, nc_loading=True, nc_instance=nc_instance)
+                        load_mandate_from_fp(self.nc_mandatefilepath, nc_loading=True, nc_instance=nc_instance)
 
                     if not self.nc_auth_user:
                         self.loginprompt = LoginPrompt(try_logging_in_f, title="Nextcloud Login")
                         self.loginprompt.show()
-                    else: load_mandate(self.nc_mandatefilepath, nc_loading=True,nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=self.nc_auth_user,
+                    else: load_mandate_from_fp(self.nc_mandatefilepath, nc_loading=True,nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=self.nc_auth_user,
                                                 nc_auth_pass=self.nc_auth_pass))
                 else:
                     filepath = load_filepath(self,"Lade Daten von SEPA Mandate")
-                    load_mandate(filepath)
+                    load_mandate_from_fp(filepath)
             else:
-                load_mandate(filepath)
+                load_mandate_from_fp(filepath)
+
 
         def import_invoice_data():
             print("import invoice data")
@@ -239,8 +273,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Rechnungsdaten"].index, "Speicherort"] = filepath
 
 
-                invoicedata = self.invoices.load_data(filepath=filepath)
+                invoicedata= self.invoices.load_data(filepath=filepath)
                 if invoicedata is not None:
+                    invoicequart = invoicedata["detailed"]["Abrechnung"].iloc[0]
+                    invoices_year, invoices_quart = invoicequart.split("-")[-2], invoicequart.split("-")[-1]
+                    self.thisinvoices_year = invoices_year
+                    self.thisinvoice_quart = invoices_quart
                     debit = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Rechnung")]
                     transfer = invoicedata["list"][(invoicedata["list"]["Dokumenttyp"] == "Gutschrift")|(invoicedata["list"]["Dokumenttyp"] == "Information")]
 
@@ -252,224 +290,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     print()
 
-        def select_templates():
-            print("Select templates")
-            filepath1 = load_filepath(self,"Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
-            if filepath1 is not None:
-                filepath2 = load_filepath(self,"Wähle Exportvorlage für SEPA Lastschrift aus",filter =  "csv (*.csv)")
-                if filepath2 is not None:
-                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate Vorlagen"].index, "Speicherort1"] = filepath1
-                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][self.loaded_filepaths["Daten"] == "Mandate Vorlagen"].index, "Speicherort2"] = filepath2
-
-                    template = self.mandates.load_template(filepath1,filepath2)
-                    updatetable_1_1()
-
-        def export_csv():
-            print("Export cvs")
-            if self.exportwindow is None:
-                #data check
-                if not self.invoicesdata_loaded:
-                    errorbox = QMessageBox()
-                    errorbox.setText("Es wurden keine Rechungsdaten ausgewählt, wähle zuerst diese aus und versuch es nochmal.")
-                    errorbox.exec_()
-                    return None
-                if not self.mandatesdata_loaded:
-                    errorbox = QMessageBox()
-                    errorbox.setText("Es wurden keine Mandatssdaten ausgewählt, wähle zuerst diese aus und versuch es nochmal.")
-                    errorbox.exec_()
-
-                    return None
-
-                self.exportwindow = Subwindow("Exportiere .csv für SEPA")
-                self.exportwindow.resize(500, 100)
-                self.exportwindow.move(30, 30)
-                self.exportwindow.tablegrid = QGridLayout()
-                self.exportwindow.tablegrid.setColumnStretch(0,1)
-                self.exportwindow.tablegrid.setColumnStretch(1,10)
-                self.exportwindow.tablegrid.setColumnStretch(2,5)
-
-                header_layout = QHBoxLayout()
-
-                # Add header labels to the header layout
-                header_label1 = QLabel("")
-                header_label2 = QLabel("Name")
-                header_label3 = QLabel("Betrag [€]")
-                header_layout.addWidget(header_label1)
-                header_layout.addWidget(header_label2)
-                header_layout.addWidget(header_label3)
-                header_layout.setStretch(0,1)
-                header_layout.setStretch(1,10)
-                header_layout.setStretch(2,5)
-
-
-                self.exportwindow.list_data = []
-
-                names = []
-                amounts = []
-                for idx, person in self.invoices.data["list"].iterrows():
-                    name = person["Empfänger Vorame"]
-                    if not pd.isna(person["Empfänger Nachname"]):
-                        name += f" {person['Empfänger Nachname']}"
-                    names.append(name)
-                    if person["Dokumenttyp"] == "Rechnung":
-                        amounts.append(-person["Rechnungsbetrag Brutto"])
-                    else: amounts.append(person["Rechnungsbetrag Brutto"])
-
-                # mandatesexist = []
-                # for name in names:
-                #     if (mandates.data["Zahlungspflichtiger Name"] == name).any():
-                #         mandatesexist.append("x")
-                #     else: mandatesexist.append("")
-
-                for index,(name,amount) in enumerate(zip(names,amounts)):
-                    index += 1
-                    checkbox = QCheckBox()
-                    checkbox.setChecked(True)
-                    col1 = QLabel(str(name))
-                    col2 = QLabel(str(amount))
-
-                    self.exportwindow.tablegrid.addWidget(checkbox,index,0)
-                    self.exportwindow.tablegrid.addWidget(col1,index,1)
-                    self.exportwindow.tablegrid.addWidget(col2,index,2)
-
-                    self.exportwindow.list_data.append(checkbox)
-
-                # print(self.exportwindow.tablegrid.rowCount())
-                # for i in range(0,self.exportwindow.tablegrid.rowCount()):
-                #     self.exportwindow.tablegrid.setRowStretch(i, 0)
-
-
-
-                def get_selected_names():
-                    nr_list_widgets = len(self.exportwindow.list_data)
-                    selected_names = [False] * nr_list_widgets
-                    for index,checkbox in enumerate(self.exportwindow.list_data):
-                        if checkbox.isChecked():
-                            selected_names[index] = True
-
-                    print(self.invoices.data["list"].loc[selected_names])
-                    invoices_selected_names = self.invoices.data["list"].loc[selected_names]
-
-                    exportingdebit,exportingtransfer, missingmandates,doublesprocess = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
-                    if doublesprocess["Name"]:
-                        print("we merged doubes")
-                        dlg = QMessageBox(self)
-                        questiontext = f"Für folgende Personen gibt es sowohl Überweisungsdaten und Lastschriftdaten. Diese werden zusammengeführt:\n\n"
-                        for i in range(0,len(doublesprocess["Name"])):
-                            questiontext += f"{doublesprocess["Name"][i]}: Lastschrift: {doublesprocess["Debit"][i]}€, Überweisung: {doublesprocess["Transfer"][i]}€ --> {doublesprocess["Type"][i]} mit {doublesprocess["Final"][i]}€ \n"
-                        dlg.setText(questiontext)
-                        prompt = dlg.exec()
-
-
-                    if missingmandates:
-                        dlg = QMessageBox(self)
-                        questiontext = f"Für folgende Personen gibt es Daten zur Lastschrift, aber keine Daten zu einem Mandat:\n\n"
-                        for name in missingmandates:
-                            questiontext += f"{name} \n"
-                        questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen.)"
-
-                        dlg.setText(questiontext)
-                        dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                        prompt = dlg.exec()
-                        if prompt == QMessageBox.No:
-                            print("Abort")
-                            return
-
-                    print(f"df = {exportingdebit,exportingtransfer}")
-                    filepath1 = load_filepath(self,"Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False)
-                    if filepath1 is not None:
-                        if ".csv" not in filepath1:
-                            filepath1 = f"{filepath1}.csv"
-                        print(f"Export to: {filepath1}")
-                        try:
-                            exportingdebit.to_csv(filepath1, index=False,sep=";")
-                        except:
-                            errorbox = QMessageBox("Saving didnot work")
-                            print("savning didnot work")
-                    else: return
-
-                    filepath2 = load_filepath(self,"Wähle Speicherort für Export für Überweisungen aus",
-                                              filter="csv (*.csv)", fileex=False)
-
-                    if filepath2 is not None:
-                        if ".csv" not in filepath2:
-                            filepath2 = f"{filepath2}.csv"
-                        print(f"Export to: {filepath2}")
-                        try:
-                            exportingtransfer.to_csv(filepath2, index=False,sep=";")
-                        except:
-                            errorbox = QMessageBox("Saving didnot work")
-                            print("savning didnot work")
-                    else:
-                        return
-                    self.exportwindow.close()
-                    return selected_names
-
-
-                self.exportwindow.ok_button = QPushButton("OK")
-                self.exportwindow.ok_button.pressed.connect(get_selected_names)
-                self.exportwindow.overallverticallayout.addLayout(header_layout)
-                self.exportwindow.overallverticallayout.addLayout(self.exportwindow.tablegrid)
-                # self.exportwindow.overallverticallayout.addWidget(self.exportwindow.list_widget)
-                self.exportwindow.overallverticallayout.addWidget(self.exportwindow.ok_button)
-
-
-
-                self.exportwindow.show()
-            else:
-                self.exportwindow.close()  # Close window.
-                self.exportwindow = None  # Discard reference.
-
-        def reload_table_view(tablenr,data):
-            """
-
-            :param tablenr: in columns on the grid "0_0","0_1","1_0"
-            :param data: as a Pandas Dataframe
-            :return:
-            """
-            tabledict = {"0_0":self.table_0_0,
-                         "0_1": self.table_0_1,
-                         "1_0": self.table_1_0,
-                         }
-            tabledict[tablenr].set_new_data(data)
-
-        self.reload_table_view = reload_table_view
-
-        menubardata = [["Importiere Rechnungdaten von EEG Faktura", "", import_invoice_data],
-                            ["Lade Daten von SEPA Mandate", "", import_mandates],
-                            ["Exportiere .csv Datei für Raiffeisen Infinty", "", export_csv]]
-        return menubardata
-
-    def init_menubardata_new_member(self):
-        def load_Mail():
-            print("Load Mail")
-
-            def selectmail(imap):
-                print("Select mail out of list")
-                self.mailselectionprompt = MailSelection("Select the Mail",imap=imap,functiononnewmemberparse=self.new_member.load_data)
-                self.mailselectionprompt.show()
-
-            def try_logging_in_f(user, pw):
-                print(f"try logging in IMAP server: {user} und pw: {pw}")
-                imap = imaplib.IMAP4_SSL(self.imap_server)
-                # # authenticate
-                imap.login(user, pw)
-                selectmail(imap)
-
-            # self.loginprompt = LoginPrompt(try_logging_in_f,title = "Email Login")
-            # self.loginprompt.show()
-            try_logging_in_f( "info@gemeinwohlenergie-innsbruck.at", "MnAE4SssEvb4Dm")
-
-        def show_new_member():
-            print(self.new_member.data)
-
         def load_faktura_new_member_export_template():
             def load_faktura_template(filepath, nc_loading=False, nc_instance=""):
                 if filepath is not None:
                     new_memberdata = self.new_member.load_template(filepath=filepath, nc=nc_loading, nc_instance=nc_instance)
                     if new_memberdata is not None:
                         self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
-                            self.loaded_filepaths["Daten"] == "Vorlage EEG Faktura Stammdaten Import"].index, "Speicherort"] = filepath
+                            self.loaded_filepaths["Daten"] == "Vorlage EEG Faktura Stammdaten Export"].index, "Speicherort"] = filepath
                         self.new_membersdata_loaded = True
                         self.table_1_1.set_new_data(self.loaded_filepaths.iloc[0:3])
                 else:
@@ -507,21 +334,315 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 load_faktura_template(filepath = filepath)
 
+        def load_template_invoice_from_fp(filepath):
+            if filepath is not None:
+                invoices_template = self.invoices.load_template(filepath=filepath)
+                if invoices_template is not None:
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                        self.loaded_filepaths["Daten"] == "Rechnungen Vorlage"].index, "Speicherort"] = filepath
+                    updatetable_1_1()
+            else:
+                return None
+        def select_template_invoice():
+            print("Select template invoice export")
+            filepath = load_filepath(self,"Wähle das Template für Rechnungen aus", filter="Word Document (*.docx)")
+            if filepath is not None:
+                load_template_invoice_from_fp()
+
+        def loadp_masterdata_from_fp(filepath):
+            if filepath is not None:
+                masterdata = self.masterdata.load_data(filepath=filepath)
+                mailadresses = self.emails.load_data(filepath=filepath)
+                if masterdata is not None:
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                        self.loaded_filepaths[
+                            "Daten"] == "EEG Faktura Stammdaten"].index, "Speicherort"] = filepath
+                    updatetable_1_1()
+            else:
+                return None
+
+        def import_masterdata_data():
+            print("Import the data on every person out of EEG faktura")
+            filepath = load_filepath(self,"Wähle die Masterdaten von Faktura aus.")
+            if filepath is not None:
+                loadp_masterdata_from_fp(filepath)
+
+
+        def load_energydata_fp(filepath):
+            if filepath is not None:
+                energydata = self.energydata.load_data(filepath=filepath)
+                if energydata is not None:
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                        self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten"].index, "Speicherort"] = filepath
+                    updatetable_1_1()
+            else:
+                return None
+
+        def import_energy_data():
+            print("Import the energydata out of EEG faktura")
+            filepath = load_filepath(self,"Wähle die Energiedaten für diese Quartal aus")
+            if filepath is not None:
+                load_energydata_fp(filepath)
+
+
+        def load_energydata_fp(filepath):
+            if filepath is not None:
+                email_temp = self.emails.load_template(filepath=filepath)
+                if email_temp is not None:
+                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                        self.loaded_filepaths["Daten"] == "Emails Vorlage"].index, "Speicherort"] = filepath
+                    updatetable_1_1()
+            else:
+                return None
+
+        def import_email_template():
+            print("Import the email template ")
+            filepath = load_filepath(self,"Wähle die Emailvorlage aus.",filter ="Docx (*.docx)")
+            if filepath is not None:
+                load_energydata_fp(filepath)
+
+
+        allfunctions = [import_mandates, import_invoice_data, import_masterdata_data,import_energy_data,load_faktura_new_member_export_template, select_template_invoice,import_email_template]
+
+        for index,function in enumerate(allfunctions):
+            table_widget_in_which_loading_is_done.functions_on_row_clicked[index] = function
+
+        load_template_invoice_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Rechnungen Vorlage","Speicherort"].iloc[0])
+        # loadp_masterdata_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "EEG Faktura Stammdaten","Speicherort"].iloc[0])
+        print("loaded masterdata")
+
+
+
+
+
+
+    
+    def init_menubardata_mandates(self):
+
+        def export_csv():
+            print("Export cvs")
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, mandates= self.mandates,invoicedatarequired=True, mandatesrequired=True)
+            print(f"Check was {check}, datamissing {datamissing}")
+
+            if check:
+                if self.exportwindow is None:
+                    #data check
+
+                    self.exportwindow = Subwindow("Exportiere .csv für SEPA")
+                    self.exportwindow.resize(500, 100)
+                    self.exportwindow.move(30, 30)
+                    self.exportwindow.tablegrid = QGridLayout()
+                    self.exportwindow.tablegrid.setColumnStretch(0,1)
+                    self.exportwindow.tablegrid.setColumnStretch(1,10)
+                    self.exportwindow.tablegrid.setColumnStretch(2,5)
+
+                    header_layout = QHBoxLayout()
+
+                    # Add header labels to the header layout
+                    header_label1 = QLabel("")
+                    header_label2 = QLabel("Name")
+                    header_label3 = QLabel("Betrag [€]")
+                    header_layout.addWidget(header_label1)
+                    header_layout.addWidget(header_label2)
+                    header_layout.addWidget(header_label3)
+                    header_layout.setStretch(0,1)
+                    header_layout.setStretch(1,10)
+                    header_layout.setStretch(2,5)
+
+
+                    self.exportwindow.list_data = []
+
+                    names = []
+                    amounts = []
+                    for idx, person in self.invoices.data["list"].iterrows():
+                        name = person["Empfänger Vorame"]
+                        if not pd.isna(person["Empfänger Nachname"]):
+                            name += f" {person['Empfänger Nachname']}"
+                        names.append(name)
+                        if person["Dokumenttyp"] == "Rechnung":
+                            amounts.append(-person["Rechnungsbetrag Brutto"])
+                        else: amounts.append(person["Rechnungsbetrag Brutto"])
+
+                    # mandatesexist = []
+                    # for name in names:
+                    #     if (mandates.data["Zahlungspflichtiger Name"] == name).any():
+                    #         mandatesexist.append("x")
+                    #     else: mandatesexist.append("")
+
+                    for index,(name,amount) in enumerate(zip(names,amounts)):
+                        index += 1
+                        checkbox = QCheckBox()
+                        checkbox.setChecked(True)
+                        col1 = QLabel(str(name))
+                        col2 = QLabel(str(amount))
+
+                        self.exportwindow.tablegrid.addWidget(checkbox,index,0)
+                        self.exportwindow.tablegrid.addWidget(col1,index,1)
+                        self.exportwindow.tablegrid.addWidget(col2,index,2)
+
+                        self.exportwindow.list_data.append(checkbox)
+
+                    # print(self.exportwindow.tablegrid.rowCount())
+                    # for i in range(0,self.exportwindow.tablegrid.rowCount()):
+                    #     self.exportwindow.tablegrid.setRowStretch(i, 0)
+
+
+
+                    def get_selected_names():
+                        nr_list_widgets = len(self.exportwindow.list_data)
+                        selected_names = [False] * nr_list_widgets
+                        for index,checkbox in enumerate(self.exportwindow.list_data):
+                            if checkbox.isChecked():
+                                selected_names[index] = True
+
+                        print(self.invoices.data["list"].loc[selected_names]["Empfänger Name"])
+                        invoices_selected_names = self.invoices.data["detailed"][self.invoices.data["detailed"]["Empfänger Name"].isin(self.invoices.data["list"]["Empfänger Name"])]
+
+                        exportingdebit,exportingtransfer, missingmandates,doublesprocess = produce_sepa_export_dfs(invoices_selected_names,self.mandates,self.creditor_ID)
+                        # if doublesprocess["Name"]:
+                        #     print("we merged doubes")
+                        #     dlg = QMessageBox(self, 'Frage',
+                        #     '',
+                        #     QMessageBox.Yes | QMessageBox.No,
+                        #     QMessageBox.No)
+                        #     questiontext = f"Für folgende Personen gibt es sowohl Überweisungsdaten und Lastschriftdaten. Diese werden zusammengeführt:\n\n"
+                        #     for i in range(0,len(doublesprocess["Name"])):
+                        #         questiontext += f"{doublesprocess["Name"][i]}: Lastschrift: {doublesprocess["Debit"][i]}€, Überweisung: {doublesprocess["Transfer"][i]}€ --> {doublesprocess["Type"][i]} mit {doublesprocess["Final"][i]}€ \n"
+                        #     dlg.setText(questiontext)
+                        #     prompt = dlg.exec()
+                        #
+                        # if dlg == QMessageBox.Yes:
+                        #     pass
+                        # else:
+                        #     pass
+
+                        if missingmandates:
+                            dlg = QMessageBox(self)
+                            questiontext = f"Für folgende Personen gibt es Daten zur Lastschrift, aber keine Daten zu einem Mandat:\n\n"
+                            for name in missingmandates:
+                                questiontext += f"{name} \n"
+                            questiontext += "\nWillst du trotzdem fortfahren? \n(Es ist eigentlich kein Problem, wenn ein Mandat fehlt, da du in Infinity noch ein Mandat hinzufügen kannst. Jedoch ist es 'Good practice' dies im Mandatenfile zu machen.)"
+
+                            dlg.setText(questiontext)
+                            dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                            prompt = dlg.exec()
+                            if prompt == QMessageBox.No:
+                                print("Abort")
+                                return
+
+                        print(f"df = {exportingdebit,exportingtransfer}")
+                        filepath1 = load_filepath(self,"Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False)
+                        if filepath1 is not None:
+                            if ".csv" not in filepath1:
+                                filepath1 = f"{filepath1}.csv"
+                            print(f"Export to: {filepath1}")
+                            try:
+                                exportingdebit.to_csv(filepath1, index=False,sep=";")
+                            except:
+                                errorbox = QMessageBox("Saving didnot work")
+                                print("savning didnot work")
+                        else: return
+
+                        filepath2 = load_filepath(self,"Wähle Speicherort für Export für Überweisungen aus",
+                                                  filter="csv (*.csv)", fileex=False)
+
+                        if filepath2 is not None:
+                            if ".csv" not in filepath2:
+                                filepath2 = f"{filepath2}.csv"
+                            print(f"Export to: {filepath2}")
+                            try:
+                                exportingtransfer.to_csv(filepath2, index=False,sep=";")
+                            except:
+                                errorbox = QMessageBox("Saving didnot work")
+                                print("savning didnot work")
+                        else:
+                            return
+                        self.exportwindow.close()
+                        return selected_names
+
+
+                    self.exportwindow.ok_button = QPushButton("OK")
+                    self.exportwindow.ok_button.pressed.connect(get_selected_names)
+                    self.exportwindow.overallverticallayout.addLayout(header_layout)
+                    self.exportwindow.overallverticallayout.addLayout(self.exportwindow.tablegrid)
+                    # self.exportwindow.overallverticallayout.addWidget(self.exportwindow.list_widget)
+                    self.exportwindow.overallverticallayout.addWidget(self.exportwindow.ok_button)
+
+
+
+                    self.exportwindow.show()
+                else:
+                    self.exportwindow.close()  # Close window.
+                    self.exportwindow = None  # Discard reference.
+
+            else:
+                errorbox = QMessageBox()
+                text = "Für diesen Schritt müssen noch folgende Daten eingelesen werden:"
+                for missing in datamissing:
+                    text += f"\n- {missing}"
+                errorbox.setText(text)
+                errorbox.exec_()
+        def reload_table_view(tablenr,data):
+            """
+
+            :param tablenr: in columns on the grid "0_0","0_1","1_0"
+            :param data: as a Pandas Dataframe
+            :return:
+            """
+            tabledict = {"0_0":self.table_0_0,
+                         "0_1": self.table_0_1,
+                         "1_0": self.table_1_0,
+                         }
+            tabledict[tablenr].set_new_data(data)
+
+        self.reload_table_view = reload_table_view
+
+        menubardata = [
+                            ["Exportiere .csv Datei für Raiffeisen Infinty", "", export_csv]]
+        # ["Importiere Rechnungdaten von EEG Faktura", "", import_invoice_data],
+        # ["Lade Daten von SEPA Mandate", "", import_mandates],
+        return menubardata
+
+    def init_menubardata_new_member(self):
+        def load_Mail():
+            print("Load Mail")
+
+            # def selectmail(imap):
+            #     print("Select mail out of list")
+            #     self.mailselectionprompt = MailSelection("Select the Mail",imap=imap,functiononnewmemberparse=self.new_member.load_data)
+            #     self.mailselectionprompt.show()
+
+            def try_logging_in_f(user, pw):
+                print(f"try logging in IMAP server: {user} und pw: {pw}")
+                imap = imaplib.IMAP4_SSL(self.imap_server)
+                # # authenticate
+                imap.login(user, pw)
+                selectmail(imap)
+
+            self.loginprompt = LoginPrompt(try_logging_in_f,title = "Email Login")
+            # self.loginprompt.show()
+            try_logging_in_f( "info@gemeinwohlenergie-innsbruck.at", "MnAE4SssEvb4Dm")
+
+        def show_new_member():
+            print(self.new_member.data)
+
+
+
         def export_for_faktura():
             print("Faktura Export")
-            ws = newmember.template_for_export["EEG Stammdaten"]
+            ws = masterdata.template["EEG Stammdaten"]
             matchingdict = {
 
                 "Postleitzahl":"D10",
                 "Stadt/Ort":"E10",
                 "Straße":"F10",
-                "Hausnummer":"G10",
+                "Hausnummer/Top":"G10",
                 "Vorname":"U10",
                 "Nachname":"V10",
                 "IBAN":"Z10",
                 "Name auf Bankkarte":"AA10",
                 "E-Mail":"AC10",
-                "phone":"AD10",
+                "Telefonnummer":"AD10",
 
 
 
@@ -553,11 +674,166 @@ class MainWindow(QtWidgets.QMainWindow):
             if filepath is not None:
                 if ".xlsx" not in filepath:
                     filepath = f"{filepath}.xlsx"
-                    newmember.template_for_export.save(filepath)
-        menubardata = [["Wähle eine Mail aus", "", load_Mail],["Zeige die Daten vom neuen Mitglied", "", show_new_member],
-                       ["Lade Vorlage zu Faktura Export", "", load_faktura_new_member_export_template],["Exportiere Daten vom neuen Mitglied für EEG Faktura", "", export_for_faktura]]
+                    masterdata.template.save(filepath)
+        menubardata = [["Wähle eine Mail aus", "", load_Mail],["Zeige die Daten vom neuen Mitglied", "", show_new_member],["Exportiere Daten vom neuen Mitglied für EEG Faktura", "", export_for_faktura]]
+        # ["Lade Vorlage zu Faktura Export", "", load_faktura_new_member_export_template]
         return menubardata
 
+    def init_menubardata_make_invoices(self):
+        def create_invoices_and_save():
+            print("I try to create the invoices and the save it (also to nextcloud?)")
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,invoicedatarequired=True, invoicestemprequired=True, energydataoptional= True)
+            print(f"Check was {check}, datamissing {datamissing}")
+            if "Energiedaten" in datamissing:
+                errorbox = QMessageBox()
+                text = "Die Energiedaten fehlen, du kannst aber trotzdem fortfahren"
+                errorbox.setText(text)
+                errorbox.exec_()
+            if check:
+                # first create a dict with all the info for the invoice, then render the template, then do it for all persons.
+                self.safepath_this_invoices = load_filepath(self, "Wo soll ich die Rechnungen hinspeichern?.", pathisdir=True)
+                if self.safepath_this_invoices is not None:
+                    print(f"Save to {self.safepath_this_invoices}")
+                    # for loading screeen i need multithreading
+                    class Worker(QObject):
+                        progress = pyqtSignal(str)
+                        finished = pyqtSignal()
+
+                        def __init__(self, task_func):
+                            super().__init__()
+                            self.task_func = task_func
+
+                        def run(self):
+                            self.task_func(self.progress.emit,self.finished.emit)
+
+                    class StatusDialog(QDialog):
+                        def __init__(self):
+                            super().__init__()
+                            self.setWindowTitle("Arbeitet...")
+                            self.label = QLabel("Preparing...")
+                            layout = QVBoxLayout()
+                            layout.addWidget(self.label)
+                            self.setLayout(layout)
+
+                        def update_text(self, message):
+                            self.label.setText(message)
+
+                    def task_for_worker(callback,finished):
+                        produce_invoices_and_save(self.energydata.data, invoices.data["detailed"], self.invoices.template,
+                                                  self.safepath_this_invoices,callback,finished)
+
+                    dialog = StatusDialog()
+                    dialog.show()
+
+                    thread = QThread()
+                    worker = Worker(task_for_worker)
+                    worker.moveToThread(thread)
+
+                    worker.progress.connect(dialog.update_text)
+                    worker.finished.connect(thread.quit)
+                    worker.finished.connect(dialog.accept)
+                    thread.started.connect(worker.run)
+
+                    thread.start()
+                    dialog.exec_()
+                else:
+                    print("no fp selected")
+
+
+            else:
+                errorbox = QMessageBox()
+                text = "Für diesen Schritt müssen noch folgende Daten eingelesen werden:"
+                for missing in datamissing:
+                    text += f"\n- {missing}"
+                errorbox.setText(text)
+                errorbox.exec_()
+
+        def send_invoices_mail():
+            print("Send all invoices to the mailing list")
+            print("Load Mail")
+            print(self.invoices.data)
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, masterdata=self.masterdata,emails= self.emails,invoicedatarequired=True, masterdatarequired= True,emailstemprequired=True)
+            if check:
+                personswithinvoicesmasterdata = self.masterdata.data.loc[(self.masterdata.data["Name 1"]).isin(self.invoices.data["detailed"]["Empfänger Vorame"]) & (self.masterdata.data["Name 2"]).isin(self.invoices.data["detailed"]["Empfänger Nachname"]),:]
+                print(personswithinvoicesmasterdata)
+                personswithinvoicesmasterdata = personswithinvoicesmasterdata[["Name 1","Name 2","E-Mail"]].drop_duplicates()
+
+                def try_logging_in_f(user, pw):
+                    print(f"try logging in IMAP server: {user} und pw: {pw}")
+                    try:
+                        imap = imaplib.IMAP4_SSL(self.imap_server)
+                        # # authenticate
+                        imap.login(user, pw)
+                        return True
+                    except:
+                        return False
+
+                # either do the login prompt and then execute the function or just execute the funciton
+                # self.loginprompt = LoginPrompt(try_logging_in_f, title="Email Login")
+                logged_in = try_logging_in_f("info@gemeinwohlenergie-innsbruck.at", "MnAE4SssEvb4Dm")
+                if logged_in:
+                    mailadressselection = MailAdressSelection(personswithinvoicesmasterdata["E-Mail"], title="Wähle die Personen aus, denen du eine Mail schreiben willst")
+                    if mailadressselection.exec_():  # This blocks until dialog is closed
+                        selected_persons  = None
+                        selected_persons = mailadressselection.result
+                        print("Returned from dialog:", selected_persons)
+                    else:
+                        print("Dialog canceled")
+                if selected_persons is not None:
+                    personswithinvoicesselected = personswithinvoicesmasterdata.loc[selected_persons,:]
+                    sendapproval = Sendapproval(personswithinvoicesselected["E-Mail"], title="Wähle die Personen aus, denen du eine Mail schreiben willst")
+                    if sendapproval.exec_():  # This blocks until dialog is closed
+                        send_y_n = sendapproval.result
+                        print("Returned from dialog:", send_y_n)
+                    else:
+                        print("Dialog canceled")
+                    if send_y_n:
+                        print(f"Send Mails to {personswithinvoicesselected["E-Mail"]}")
+                        if not self.safepath_this_invoices:
+                            self.safepath_this_invoices = load_filepath(self, "In welchem Ordner sind die ganzen Rechnungen gespeichert?", pathisdir=True)
+
+
+
+                        for ind, person_data in personswithinvoicesselected.iterrows():
+                            receivername = f"{person_data["Name 1"]}_{person_data["Name 2"]}"
+                            invoicequart = invoices.data["detailed"]["Abrechnung"].iloc[0]
+                            email_this = person_data["E-Mail"]
+                            invoices_year, invoices_quart = invoicequart.split("-")[-2], invoicequart.split("-")[-1]
+                            self.thisinvoices_year = invoices_year
+                            self.thisinvoice_quart = invoices_quart
+                            nameinvoicefile = f"Rechnung_{self.thisinvoices_year}_q{self.thisinvoice_quart}_{receivername}.pdf"
+
+                            fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
+                            send_mail_to_one_person(self.my_mail,self.my_mail_pw,email_this,person_data["Name 1"],
+                                                    self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
+                            # send_mail_to_one_person(self.my_mail,self.my_mail_pw,"leander.stark@a1.net",person_data["Name 1"],
+                            #                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
+
+
+
+
+                    else: print("Dont send")
+                else:
+                    print("Abort since nobody was selected")
+            else:
+                errorbox = QMessageBox()
+                text = "Für diesen Schritt müssen noch folgende Daten eingelesen werden:"
+                for missing in datamissing:
+                    text += f"\n- {missing}"
+                errorbox.setText(text)
+                errorbox.exec_()
+
+            # for
+            #     # MailAdressSelection(self.emails, "An welche Mailadressen soll ich die Rechnungen schicken")
+
+
+
+
+
+
+
+        menubardata = [["Erstelle alle Rechnungen", "", create_invoices_and_save],["Verschicke die Rechnungen per Mail", "", send_invoices_mail]]
+        return menubardata
 
 
 def main():

@@ -137,9 +137,9 @@ class MailSelection(QWidget):
         self.nr_messages = int(messages[0])  # total number of emails
         self.Mailcheckwindow = None
 
-        # email_subjects = self.get_mail_subjects(self.start,self.finish)
-        # self.reload_list(email_subjects)
-        mailmessage = self.get_mail_messages(2,anmeldungstyp="Produzent:in")
+        email_subjects = self.get_mail_subjects(self.start,self.finish)
+        self.reload_list(email_subjects)
+        # mailmessage = self.get_mail_messages(2,anmeldungstyp="Produzent:in")
 
 
         self.moredown = QPushButton("Mehr")
@@ -178,6 +178,7 @@ class MailSelection(QWidget):
             self.email_list.addItem(f"{sender}:\t{subject}")
     def confirm_selection(self,item):
         if item:
+            anmeldungstyp = "Konsument:in"
             if ('Neuanmeldung Stromkonsument:in' in item.text()):
                 anmeldungstyp = "Konsument:in"
             elif ('Neuanmeldung Stromproduzent:in' in item.text()):
