@@ -52,10 +52,10 @@ def check_doubles(invoices):
 
 
 
-def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
+def produce_sepa_export_dfs(invoices_selected_persons):
     debit,transfer, doublesprocess = check_doubles(invoices_selected_persons)
 
-    def create_one_line_debit(invoicelistline,creditor_ID,mandates,datatype = "debit"):
+    def create_one_line_debit(invoicelistline,datatype = "debit"):
         print(invoicelistline["Empfänger Name"])
         columns_debit_export = ['Fälligkeitsdatum', 'Zahlungspflichtiger Name',
        'Zahlungspflichtiger Adresse', 'Zahlungspflichtiger Ort',
@@ -79,22 +79,25 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
                 "Zahlungspflichtiger Ort": "Empfänger Adresse 2",
                 "Zahlungspflichtiger IBAN": "Empfänger Konto IBAN",
                 "Betrag in EUR": "Pos. Bruttobetrag",
-                "Auftraggeber IBAN": "Ersteller IBAN"
+                "Auftraggeber IBAN": "Ersteller IBAN",
+                "Mandatsausstellungsdatum":"Empfänger Mandatsausstellung",
+                "Mandatsreferenz": "Empfänger Mandatsreferenz",
+                "Creditor ID": "Ersteller Creditor Id"
             }
-            exportline["Mandatsreferenz"] = f"{invoicelistline['Empfänger Mitgliedsnummer']:03}"
-            exportline["Creditor ID"] = creditor_ID
+            # exportline["Mandatsreferenz"] = f"{invoicelistline['Empfänger Mitgliedsnummer']:03}"
+            # exportline["Creditor ID"] = creditor_ID
 
 
-            mandateline = mandates.data[(mandates.data["Vorname"] == invoicelistline["Empfänger Vorame"])]
-            matchingmandate = True
-            if not pd.isna(invoicelistline["Empfänger Nachname"]):
-                mandateline = mandateline[(mandateline["Nachname"] == invoicelistline["Empfänger Nachname"])]
-            if mandateline.size > 0:
-                exportline["Mandatsausstellungsdatum"] = mandateline["Mandatsausstellungsdatum"].iloc[0].strftime("%d.%m.%Y")
-                exportline["Firmenlastschrift"] = mandateline["Firmenlastschrift"].iloc[0]
-            else:
-                exportline["Creditor ID"] = 0
-                matchingmandate = False
+            # mandateline = mandates.data[(mandates.data["Vorname"] == invoicelistline["Empfänger Vorame"])]
+            # matchingmandate = True
+            # if not pd.isna(invoicelistline["Empfänger Nachname"]):
+            #     mandateline = mandateline[(mandateline["Nachname"] == invoicelistline["Empfänger Nachname"])]
+            # if mandateline.size > 0:
+            #     exportline["Mandatsausstellungsdatum"] = mandateline["Mandatsausstellungsdatum"].iloc[0].strftime("%d.%m.%Y")
+            #     exportline["Firmenlastschrift"] = mandateline["Firmenlastschrift"].iloc[0]
+            # else:
+            #     exportline["Creditor ID"] = 0
+            #     matchingmandate = False
 
 
         elif datatype == "transfer":
@@ -110,7 +113,16 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
             }
 
         for exportcol in matchingdictinvoice.keys():
-            exportline[exportcol] = invoicelistline[matchingdictinvoice[exportcol]]
+            thisentry = invoicelistline[matchingdictinvoice[exportcol]]
+
+            try:
+                thisentry = thisentry.strftime("%d.%m.%Y")
+            except: pass
+            exportline[exportcol] = thisentry
+        if invoicelistline["Empfänger Einzugsart"] == "B2B":
+            exportline["Firmenlastschrift"] = 1
+        else:
+            exportline["Firmenlastschrift"] = 0
 
 
         def get_quartal_out_of_str(string):
@@ -119,38 +131,36 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
 
         year, quartal = get_quartal_out_of_str(invoicelistline["Abrechnung"])
         exportline["Zahlungsreferenz/Verwendungszweck"] = f"Gemeinwohlenergie Rechung {year} Quartal {quartal}"
-        if datatype == "debit":
-            return exportline, matchingmandate
-        else:
-            return exportline
+
+        return exportline
 
 
     serieslist = []
-    missingmandates = []
+    # missingmandates = []
     for index, line in debit.iterrows():
-        exportline,matchingmandate = create_one_line_debit(line,creditor_ID,mandates,datatype="debit")
+        exportline = create_one_line_debit(line,datatype="debit")
         if exportline is not None:
             serieslist.append(exportline)
-            if not matchingmandate:
-                missingmandates.append(f"{line['Empfänger Vorame']} {line['Empfänger Nachname']}")
+            # if not matchingmandate:
+            #     missingmandates.append(f"{line['Empfänger Vorame']} {line['Empfänger Nachname']}")
     debitexport = pd.concat(serieslist, axis=1).T
 
     serieslist = []
     for index, line in transfer.iterrows():
-        exportline = create_one_line_debit(line,creditor_ID,mandates,datatype="transfer")
+        exportline = create_one_line_debit(line,datatype="transfer")
         if exportline is not None:
             serieslist.append(exportline)
     transferexport = pd.concat(serieslist, axis=1).T
 
     reply = QMessageBox.question(None,
         'Frage',
-        'Willst du die einzelne Positionen zusammenfassen??',
+        'Willst du jede Positionen einzeln ausweisen \n(z.b. eine eigene Überweisung für Mitgliedsbeitrag und Stromkosten)??',
         QMessageBox.Yes | QMessageBox.No,
         QMessageBox.No
     )
 
     # Check the user's response
-    if reply == QMessageBox.Yes:
+    if reply == QMessageBox.No:
         print("Merge single positions")
 
         def group_and_aggregate(df, group_cols, sum_cols):
@@ -193,7 +203,7 @@ def produce_sepa_export_dfs(invoices_selected_persons,mandates,creditor_ID):
     transferexport["Betrag in EUR"] = transferexport["Betrag in EUR"].apply(lambda x: f"{x:.2f}".replace('.', ','))
 
 
-    return debitexport,transferexport, missingmandates, doublesprocess
+    return debitexport,transferexport, doublesprocess
 
 #    fullname = f"{personaldata['Name 1']} {personaldata['Name 2']}"
 #personaldata =  masterdata.data.iloc[0]
@@ -206,10 +216,10 @@ def produce_invoices_and_save(energydata,invoicedata,invoicetemplate,savedirfp,c
     # debit, transfer = debit[cols_for_tbl], transfer[cols_for_tbl]
     nr_all_persons = invoicedata["Empfänger Name"].unique().shape[0]
     for index,name in enumerate(invoicedata["Empfänger Name"].unique()):
+    # for index, name in enumerate(["Gerhard Halder"]):
         print(f"({index+1}/{nr_all_persons}) Make invoice for {name}")
         callback(f"({index+1}/{nr_all_persons}) Ich mache die Rechnung für {name}...")
         invoicethis = invoicedata[invoicedata["Empfänger Name"] == name]
-        print(invoicethis)
         debits_this =  debit[debit["Empfänger Name"] == name]
         transfers_this = transfer[transfer["Empfänger Name"] == name]
         total_transfer_debit = "Rechnung"
@@ -238,8 +248,9 @@ def produce_invoices_and_save(energydata,invoicedata,invoicetemplate,savedirfp,c
         sumbrutto = str(round(all_position_for_tbl['Pos. Bruttobetrag'].sum(),2))
 
 
-        cols_for_tbl = ['Pos. Invoicetext','Pos. Menge','Pos. Preis / Einheit','Pos. Nettobetrag','Pos. UST %','Pos. Bruttobetrag']
-        moneycols = ['Pos. Preis / Einheit','Pos. Nettobetrag','Pos. Bruttobetrag']
+
+        cols_for_tbl = ['Pos. Invoicetext','Pos. Menge','Pos. Preis / Einheit','Pos. Nettobetrag','Pos. UST %','Pos. UST Betrag','Pos. Bruttobetrag']
+        moneycols = ['Pos. Preis / Einheit','Pos. Nettobetrag','Pos. UST Betrag','Pos. Bruttobetrag']
         all_position_for_tbl[moneycols] = all_position_for_tbl[moneycols].map("{0:.2f}".format)
         all_position_for_tbl = all_position_for_tbl[cols_for_tbl]
 
@@ -271,99 +282,161 @@ def produce_invoices_and_save(energydata,invoicedata,invoicetemplate,savedirfp,c
 
         # print(parsing_dict)
         image_stream = BytesIO()
-        fig, axs = plt.subplots(2)
+        sizemutiplier = 1.9
+
+        fig, axs = plt.subplots(4, height_ratios=[0.3,10,10,10],figsize=(4.2 * sizemutiplier, 2.7 * sizemutiplier))
+        #axs[0] is only for the spacing
+        axs[0].set_xticklabels([])
         # prepare data for plot
         # check whether the energy direction is always the same
+        name_new = name
         try:
             energydata.loc[:, pd.IndexSlice[:, name, :, :]]
         except:
-            print("This Name is not in the Energydata try adding a whitespace")
-            name += " "
+            print(f"This Name {name}  is not in the Energydatacolumns {energydata.columns.get_level_values(level="Name")} try adding a whitespace")
+            name_new = name+ " "
+            try:
+                energydata.loc[:, pd.IndexSlice[:, name_new, :, :]]
+            except:
+                print(
+                    f"This Name {name_new}  is not in the Energydatacolumns {energydata.columns.get_level_values(level="Name")} try deleting the last char")
+                name_new = name[0:-1]
+                try:
+                    energydata.loc[:, pd.IndexSlice[:, name_new, :, :]]
+                except:
+                    print(f"Nothing worked, abort, change the name of the columns in the files sot that they are the same: \n"
+                          f"in Invoice: {name}, so that it maches in the Energydata any f the columns: {energydata.columns.get_level_values(level="Name")}")
+                    return None
+
+        name = name_new
+
         energydirections = energydata.xs(name, level="Name", axis=1).columns.get_level_values(level="Energy direction")
         meteringpointids = energydata.xs(name, level="Name", axis=1).columns.get_level_values(level="MeteringpointID")
-        for energydirection, meteringpointid in zip(energydirections.unique(), meteringpointids.unique()):
-            # print(energydirection, meteringpointid)
+        hatches = ['', '/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+        edgecolors = ['none', 'black', 'green', 'red']
+        hatches_this_person = [x for x, y in zip(hatches, range(0, meteringpointids.unique().shape[
+            0]))]  # take nr meteringpoints hatches
+        hatchnr = -1
+        parsing_dict["TextfürVerbrauch"] = ""
+        for energydirection in energydirections.unique():
+            for meteringpointid in meteringpointids.unique():
+                hatchnr += 1
+                hatch = hatches[hatchnr]
+                edgecolor = edgecolors[hatchnr]
+                print(energydirection, meteringpointid, hatch)
 
-            if energydirection == "GENERATION":
-                total_energy = energydata.loc[:, pd.IndexSlice[:, name, energydirection,
-                                                             "Gesamte gemeinschaftliche Erzeugung [KWH]"]].sort_index()
+                if energydirection == "GENERATION":
+                    total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                    "Gesamte gemeinschaftliche Erzeugung [KWH]"]].sort_index()
 
-                energy_through_evu = energydata.loc[:, pd.IndexSlice[:, name, energydirection,
-                                                                  "Gesamt/Überschusserzeugung, Gemeinschaftsüberschuss [KWH]"]].sort_index()
-                energy_through_eg = pd.DataFrame((np.nan_to_num(total_energy.values,0 )- np.nan_to_num(energy_through_evu.values,0)),index=total_energy.index)
+                    energy_through_evu = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                    "Gesamt/Überschusserzeugung, Gemeinschaftsüberschuss [KWH]"]].sort_index()
+                    energy_through_eg = pd.DataFrame(
+                        (np.nan_to_num(total_energy.values, 0) - np.nan_to_num(energy_through_evu.values, 0)),
+                        index=total_energy.index)
 
-                plottext1  = "Energielieferung an außerhalb der Energiegemeinschaft"
-                plottext2  = "Energielieferung über unsere Energiegemeinschaft"
-                totalsumeg = energy_through_eg.sum().values[0]
-                shareeg = totalsumeg/total_energy.sum().values[0]*100
-                parsing_dict["TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh an die Energiegemeischaft verkauft. \nDies ist {shareeg:.1f}% der gesamten erzeugten Energie."
-            else:
-                total_energy= energydata.loc[:, pd.IndexSlice[:, name, energydirection,
-                                                             "Gesamtverbrauch lt. Messung (bei Teilnahme gem. Erzeugung) [KWH]"]].sort_index()
-                energy_through_eg = energydata.loc[:, pd.IndexSlice[:, name, energydirection,
-                                                                  "Eigendeckung gemeinschaftliche Erzeugung [KWH]"]].sort_index()
-                energy_through_evu = pd.DataFrame((np.nan_to_num(total_energy.values,0 )- np.nan_to_num(energy_through_eg.values,0)), index=total_energy.index)
+                    plottext1 = f"Energielieferung an außerhalb der Energiegemeinschaft von ZP {meteringpointid[-6:]}"
+                    plottext2 = f"Energielieferung über unsere Energiegemeinschaft von ZP {meteringpointid[-6:]}"
+                    totalsumeg = np.nansum(energy_through_eg.values)
+                    shareeg = totalsumeg / np.nansum(total_energy.values) * 100
+                    if meteringpointids.unique().shape[0] == 1:
+                        parsing_dict[
+                            "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh an die Energiegemeischaft verkauft. \nDies ist {shareeg:.1f}% deiner gesamten erzeugten Energie in diesem Quartal."
+                    else:
+                        parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh an die Energiegemeischaft gelifert. \nDies ist {shareeg:.1f}% der erzeugten Energie in diesem Quartal.\n"
+                else:
+                    total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                    "Gesamtverbrauch lt. Messung (bei Teilnahme gem. Erzeugung) [KWH]"]].sort_index()
+                    energy_through_eg = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                    "Eigendeckung gemeinschaftliche Erzeugung [KWH]"]].sort_index()
+                    energy_through_evu = pd.DataFrame((total_energy.values - energy_through_eg.values),
+                                                      index=total_energy.index)
 
-                plottext1  = "Energiebezug von Stromlieferant"
-                plottext2  = "Energiebezug über unsere Energiegemeinschaft"
-                totalsumeg = energy_through_eg.sum().values[0]
-                shareeg = totalsumeg/total_energy.sum().values[0]*100
-                parsing_dict["TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% des Gesamtenergieverbrauchs."
-            # dailysums_total_energy = total_energy_consumption.groupby(total_energy_consumption.index.strftime('%d.%m.%Y')).sum()
+                    plottext1 = f"Energiebezug von Stromlieferant für ZP {meteringpointid[-6:]}"
+                    plottext2 = f"Energiebezug über unsere Energiegemeinschaft für ZP {meteringpointid[-6:]}"
+                    totalsumeg = np.nansum(energy_through_eg.values)
+                    shareeg = totalsumeg / np.nansum(total_energy.values) * 100
+                    if meteringpointids.unique().shape[0] == 1:
+                        parsing_dict[
+                            "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% deines Gesamtenergieverbrauchs in diesem Quartal."
+                    else:
+                        parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% des Verbrauchs in diesem Quartal.\n"
 
-            energy_through_evu_weeklysum = energy_through_evu.groupby(energy_through_evu.index.strftime('%Y-%W')).sum()
-            xaxis_energy_through_evu = []
-            xaxis_energy_through_eeg = []
-            for week, weektotalenergy in energy_through_evu.groupby(energy_through_evu.index.strftime('%Y-%W')):
-                xaxis_energy_through_evu.append(dt.datetime.strptime(f"{week}-1","%Y-%U-%w"))#the one saying we take the monday of the week
-            energy_through_eeg_weeklysum = energy_through_eg.groupby( energy_through_eg.index.strftime('%Y-%W')).sum()
-            for week, weekenergy_through_eg in energy_through_eg.groupby(energy_through_eg.index.strftime('%Y-%W')):
-                xaxis_energy_through_eeg.append(dt.datetime.strptime(f"{week}-1","%Y-%U-%w"))
+                    # dailysums_total_energy = total_energy_consumption.groupby(total_energy_consumption.index.strftime('%d.%m.%Y')).sum()
 
-            # throuw away the first and last week since they are only partly and will change the sum
-            energy_through_evu_weeklysum = energy_through_evu_weeklysum.iloc[1:-1]
-            energy_through_eeg_weeklysum = energy_through_eeg_weeklysum.iloc[1:-1]
-            xaxis_energy_through_evu = xaxis_energy_through_evu[1:-1]
-            xaxis_energy_through_eeg = xaxis_energy_through_eeg[1:-1]
+                energy_through_evu_weeklysum = energy_through_evu.groupby(
+                    energy_through_evu.index.strftime('%Y-%W')).sum()
+                xaxis_energy_through_evu = []
+                xaxis_energy_through_eeg = []
+                for week, weektotalenergy in energy_through_evu.groupby(energy_through_evu.index.strftime('%Y-%W')):
+                    xaxis_energy_through_evu.append(
+                        dt.datetime.strptime(f"{week}-1", "%Y-%U-%w"))  # the one saying we take the monday of the week
+                energy_through_eeg_weeklysum = energy_through_eg.groupby(
+                    energy_through_eg.index.strftime('%Y-%W')).sum()
+                for week, weekenergy_through_eg in energy_through_eg.groupby(energy_through_eg.index.strftime('%Y-%W')):
+                    xaxis_energy_through_eeg.append(dt.datetime.strptime(f"{week}-1", "%Y-%U-%w"))
 
-            dailyhourmean_energy_through_evu = energy_through_evu.groupby(energy_through_evu.index.hour).mean()
-            dailyhourmean_through_eeg = energy_through_eg.groupby(
-                energy_through_eg.index.hour).mean()
-            barwidth = dt.timedelta(days=3)
-            xaxis_energy_through_evu = [x - 0.5* barwidth for x in xaxis_energy_through_evu]
-            xaxis_energy_through_eeg = [x + 0.5 * barwidth for x in xaxis_energy_through_eeg]
-            axs[0].bar(xaxis_energy_through_evu, energy_through_evu_weeklysum.values.T[0], width=barwidth,
-                       label=plottext1,
-                       color="#69a4dc")
-            axs[0].bar(xaxis_energy_through_eeg, energy_through_eeg_weeklysum.values.T[0], width=barwidth,
-                       label=plottext2,
-                       color="#f8ae42")
-            axs[0].xaxis.set_major_locator(MonthLocator())
-            axs[0].xaxis.set_major_formatter(DateFormatter('%b %Y'))
-            # axs[0].xaxis.set_label_position("right")
-            axs[0].set_ylabel("kWh in der Woche")
-            axs[0].legend(loc=1)
-            # Creating the secondary x-axis
-            # ax2 = axs[0].twiny()
-            # Setting the secondary x-axis ticks as month labels
-            # ax2.set_xlim(axs[0].get_xlim())  # Make sure both x-axes have the same range
-            # ax2.set_xticks(dailysums_total_energy.index.values)  # Set tick positions on the secondary axis
-            # ax2.set_xticklabels([date.strftime('%b') for date in dailysums_total_energy.index.values])  # Format as month names (e.g., Jan, Feb, etc.)
-            # ax2.set_xlabel('Month')
+                # throuw away the first and last week since they are only partly and will change the sum
+                energy_through_evu_weeklysum = energy_through_evu_weeklysum.iloc[1:-1]
+                energy_through_eeg_weeklysum = energy_through_eeg_weeklysum.iloc[1:-1]
+                xaxis_energy_through_evu = xaxis_energy_through_evu[1:-1]
+                # shift one day earlier
 
-            barwidth = 0.4
-            axs[1].bar(dailyhourmean_energy_through_evu.index - 0.5 * barwidth,
-                       dailyhourmean_energy_through_evu.values.T[0], width=barwidth, color="#69a4dc")
-            axs[1].bar(dailyhourmean_through_eeg.index + 0.5 * barwidth, dailyhourmean_through_eeg.values.T[0],
-                       width=barwidth, color="#f8ae42")
-            axs[1].set_xticks([0, 6, 12, 18, 24])
-            axs[1].set_xticklabels(["0 Uhr", "6 Uhr", "12 Uhr", "18 Uhr", "24 Uhr"])
-            axs[1].set_ylabel("Durchschnittliche Leistung \nzur Tageszeit [kW]")
+                xaxis_energy_through_eeg = xaxis_energy_through_eeg[1:-1]
 
+                dailyhourmean_energy_through_evu = energy_through_evu.groupby(energy_through_evu.index.hour).mean()
+                dailyhourmean_through_eeg = energy_through_eg.groupby(
+                    energy_through_eg.index.hour).mean()
+                barwidth = dt.timedelta(days=3)
+                xaxis_energy_through_evu = [x - 0.5 * barwidth for x in xaxis_energy_through_evu]
+                xaxis_energy_through_eeg = [x + 0.5 * barwidth for x in xaxis_energy_through_eeg]
+
+                energy_through_evu_weekday = energy_through_evu.groupby(
+                    energy_through_evu.index.strftime('%Y-%w')).sum()
+                energy_through_evu_weekday = np.roll(energy_through_evu_weekday.values, shift=-1,
+                                                     axis=0).T  # because it starts with sunday roll by one day
+                energy_through_eg_weekday = energy_through_eg.groupby(energy_through_eg.index.strftime('%Y-%w')).sum()
+                energy_through_eg_weekday = np.roll(energy_through_eg_weekday.values, shift=-1,
+                                                    axis=0).T  # because it starts with sunday roll by one day
+                xaxis_weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+
+                axs[1].bar(xaxis_energy_through_evu, energy_through_evu_weeklysum.values.flatten(), width=barwidth,
+                           label=plottext1,
+                           color="#69a4dc", hatch=hatch, edgecolor=edgecolor)
+                # print(f"energy_through_evu_weeklysum:{energy_through_evu_weeklysum}")
+
+
+                axs[1].bar(xaxis_energy_through_eeg, energy_through_eeg_weeklysum.values.flatten(), width=barwidth,
+                           label=plottext2,
+                           color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+                # print(f"energy_through_evu_weeklysum:{energy_through_eeg_weeklysum}")
+                axs[1].xaxis.set_major_locator(MonthLocator())
+                axs[1].xaxis.set_major_formatter(DateFormatter('%b %Y'))
+                # axs[1].xaxis.set_label_position("right")
+                axs[1].set_ylabel("kWh")
+
+                barwidth = 0.4
+                axs[2].bar(dailyhourmean_energy_through_evu.index - 0.5 * barwidth,
+                           dailyhourmean_energy_through_evu.values.flatten(), width=barwidth, color="#69a4dc", hatch=hatch,
+                           edgecolor=edgecolor)
+                axs[2].bar(dailyhourmean_through_eeg.index + 0.5 * barwidth, dailyhourmean_through_eeg.values.flatten(),
+                           width=barwidth, color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+                axs[2].set_xticks([0, 6, 12, 18, 24])
+                axs[2].set_xticklabels(["0 Uhr", "6 Uhr", "12 Uhr", "18 Uhr", "24 Uhr"])
+                axs[2].set_ylabel("kW")
+
+                barwidth = 0.4
+                axs[3].bar(np.linspace(0, 6, 7) - 0.5 * barwidth, energy_through_evu_weekday.flatten(), width=barwidth,
+                           color="#69a4dc", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+                axs[3].bar(np.linspace(0, 6, 7) + 0.5 * barwidth, energy_through_eg_weekday.flatten(), width=barwidth,
+                           color="#f8ae42", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+                axs[3].set_ylabel("kWh")
+                axs[1].legend(fontsize='small',loc = 1,bbox_to_anchor = (0.8,1.22))
 
         invoicetemplate.render(parsing_dict)
         # fig.set_size(3.49, 1.97)
-        fig.tight_layout(rect=(0.05, 0.1, 1, 0.8))
+        # fig.tight_layout(rect=(0.05, 0.1, 1, 0.8))
+        fig.subplots_adjust(wspace=0.4, hspace=0.3)
         plt.savefig(image_stream, format="png")
         # plt.show()
 
