@@ -1,0 +1,14 @@
+{"nc_url" : "",
+  "nc_mandatefilepath" : "",
+  "nc_faktura_export_template_fp" : "",
+  "creditor_ID" : "",
+  "Gemeinschafts_ID" : "",
+  "my_mail" : "",
+  "imap_server" : "",
+  "my_mail_pw": "",
+  "home_directory":"",
+  "template_import_masterdata":"",
+  "template_export_invoice":"",
+  "template_email":  ""
+
+}
