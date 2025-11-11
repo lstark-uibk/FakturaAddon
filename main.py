@@ -103,9 +103,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]
-        paths_datanames = ["Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","EEG Faktura Quartalsenergiedaten QOV","Vorlage Neues Mitglied in EEG Faktura","Rechnungen Vorlage", "Emails Vorlage"]
+        paths_datanames = ["Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","EEG Faktura Quartalsenergiedaten QOV","Rechnungen Vorlage", "Emails Vorlage"]
         self.loaded_filepaths = pd.DataFrame({"Daten":paths_datanames,
-                                  "Speicherort":["Auswählen","Auswählen","Auswählen","Auswählen",self.config["template_import_masterdata"],self.config["template_export_invoice"],self.config["template_email"]],
+                                  "Speicherort":["Auswählen","Auswählen","Auswählen","Auswählen",self.config["template_export_invoice"],self.config["template_email"]],
                                               })
         # promptwindows
 
