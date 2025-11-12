@@ -10,6 +10,7 @@ import numpy as np
 from jinja2 import Environment, FileSystemLoader, PackageLoader
 import smtplib, ssl
 import os
+import html2text
 
 class MailSelection(QWidget):
     """
@@ -374,18 +375,18 @@ class Sendapproval(QDialog):
         self.result = event
         self.accept()
 
-def send_mail_to_one_person(sender_email,password,receiver_email,receiver_forename,invquart,invyear, template, fp_to_invoice, port = 587):
+def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_email,receiver_forename,invquart,invyear, template, fp_to_invoice,port = 587):
     email = EmailMessage()
 
-    email['Subject'] = f"Rechnung Gemeinwohlenergie {invyear} Quartal {invquart}"
+    email['Subject'] = f"Rechnung {sender_name} {invyear} Quartal {invquart}"
     email['From'] = sender_email
     email['To'] = receiver_email
     print(f"Sending Mail from {sender_email} with to {receiver_email} with subject {email['Subject']} with attachment {fp_to_invoice}...")
 
 
     output_from_parsed_template = template.render(name=receiver_forename, quart = invquart, year = invyear)
-    # email.attach(MIMEText(output_from_parsed_template, "html"))
-    email.set_content("This is a fallback plain text message.")  # Optional plain text
+    plain_content = f"Hallo {receiver_forename}. \nAnbei findest du deine Rechnung für das {invquart}, {invyear} \n Mit lieben Grüßen, \n{sender_name} \n\n|"
+    email.set_content(plain_content)  # Optional plain text
 
     # Add HTML content
     email.add_alternative(output_from_parsed_template, subtype='html')
@@ -405,9 +406,3 @@ def send_mail_to_one_person(sender_email,password,receiver_email,receiver_forena
         s.login(sender_email, password)
         s.send_message(email,sender_email,receiver_email)
     print("... Done")
-subject =  "Test"
-host = "mail.your-server.de"
-port = 587
-receiveradress = "leander.stark@a1.net"
-password = "iKeDMX2x5VzDiz"
-senderadress = "leander@gemeinwohlenergie-innsbruck.at"

@@ -220,53 +220,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def updatetable_1_1():
             table_widget_in_which_loading_is_done.set_new_data(self.loaded_filepaths)
-        #
-        # def load_mandate_from_fp(filepath, nc_loading=False, nc_instance=""):
-        #     if filepath is not None:
-        #         mandatedata = self.mandates.load_data(filepath=filepath, nc=nc_loading, nc_instance=nc_instance)
-        #         if mandatedata is not None:
-        #             self.reload_table_view("0_1", mandatedata)
-        #             self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
-        #                 self.loaded_filepaths["Daten"] == "Mandate"].index, "Speicherort"] = filepath
-        #             updatetable_1_1()
-        #             self.mandatesdata_loaded = True
-        #     else:
-        #         return None
-        #
-        # def import_mandates(filepath = ''):
-        #
-        #     filepath=""
-        #     if not filepath:
-        #         print("Import mandates")
-        #         dlg = QMessageBox(self)
-        #         questiontext = f"Ich kann die Mandate von folgendem Pfad in nextcloud herunterladen:"
-        #         questiontext += f"\n\n{self.nc_mandatefilepath}"
-        #         questiontext += "\n\nSoll ich es von diesem Pfad herunterladen, oder willst du lokal eine Datei von deinem Computer auswählen?"
-        #         dlg.setText(questiontext)
-        #         dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        #         prompt = dlg.exec()
-        #
-        #
-        #         if prompt == QMessageBox.Yes:
-        #             def try_logging_in_f(user,pw):
-        #                 print(f"try logging in nextcloud with user: {user} und pw: {pw}")
-        #                 # nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
-        #                 nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=user,
-        #                                         nc_auth_pass=pw)
-        #                 # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
-        #                 nc_instance.capabilities
-        #                 load_mandate_from_fp(self.nc_mandatefilepath, nc_loading=True, nc_instance=nc_instance)
-        #
-        #             if not self.nc_auth_user:
-        #                 self.loginprompt = LoginPrompt(try_logging_in_f, title="Nextcloud Login")
-        #                 self.loginprompt.show()
-        #             else: load_mandate_from_fp(self.nc_mandatefilepath, nc_loading=True,nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=self.nc_auth_user,
-        #                                         nc_auth_pass=self.nc_auth_pass))
-        #         else:
-        #             filepath = load_filepath(self,"Lade Daten von SEPA Mandate", homedir= self.home_directory)
-        #             load_mandate_from_fp(filepath)
-        #     else:
-        #         load_mandate_from_fp(filepath)
 
         def import_invoice_data():
             print("import invoice data")
@@ -319,10 +272,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 if prompt == QMessageBox.Yes:
                     def try_logging_in_f(user,pw):
                         print(f"try logging in nextcloud with user: {user} und pw: {pw}")
-                        # nextcloud_url = 'https://cloud.gemeinwohlenergie-innsbruck.at'
                         nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=user,
                                                 nc_auth_pass=pw)
-                        # self.nc_instance = Nextcloud(nextcloud_url=nextcloud_url, nc_auth_user=".adf", nc_auth_pass="sknf")
                         nc_instance.capabilities
                         self.nc_auth_user = user
                         self.nc_auth_pass = pw
@@ -408,14 +359,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 load_emaildata_fp(filepath)
 
 
-        allfunctions = [import_invoice_data, import_masterdata_data,import_energy_data,partial(import_energy_data,load_qov = True),load_faktura_new_member_export_template, select_template_invoice,import_email_template]
+        allfunctions = [import_invoice_data, import_masterdata_data,import_energy_data,partial(import_energy_data,load_qov = True), select_template_invoice,import_email_template]
 
         for index,function in enumerate(allfunctions):
             table_widget_in_which_loading_is_done.functions_on_row_clicked[index] = function
 
-        # load_template_invoice_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Rechnungen Vorlage","Speicherort"].iloc[0])
+        load_template_invoice_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Rechnungen Vorlage","Speicherort"].iloc[0])
+        load_emaildata_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Emails Vorlage","Speicherort"].iloc[0])
+
+
         # loadp_masterdata_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "EEG Faktura Stammdaten","Speicherort"].iloc[0])
-        print("loaded masterdata")
+        # print("loaded masterdata")
 
     
     def init_menubardata_Infinity(self):
@@ -508,7 +462,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         print(self.invoices.data["list"].loc[selected_names]["Empfänger Name"])
                         invoices_selected_names = self.invoices.data["detailed"][self.invoices.data["detailed"]["Empfänger Name"].isin(self.invoices.data["list"]["Empfänger Name"])]
 
-                        exportingdebit,exportingtransfer,doublesprocess = produce_sepa_export_dfs(invoices_selected_names)
+                        exportingdebit,exportingtransfer,doublesprocess = produce_sepa_export_dfs(invoices_selected_names,self.config["EEG_name"])
 
 
                         print(f"df = {exportingdebit,exportingtransfer}")
@@ -606,13 +560,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.loginprompt = LoginPrompt(try_logging_in_f,title = "Email Login")
             # self.loginprompt.show()
-            try_logging_in_f( "info@gemeinwohlenergie-innsbruck.at", "MnAE4SssEvb4Dm")
+            try_logging_in_f( self.config["my_mail"], self.config["my_mail_pw"])
 
         def show_new_member():
             print(self.new_member.data)
 
-
-
+        """
         def export_for_faktura():
             print("Faktura Export")
             check, datamissing =  check_whether_data_exists(newmember=self.new_member,newmemberdatarequired=True, newmembertemprequired=True)
@@ -683,7 +636,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     if ".xlsx" not in filepath:
                         filepath = f"{filepath}.xlsx"
                         newmember.template.save(filepath)
-        menubardata = [["Wähle eine Mail aus", "", load_Mail],["Zeige die Daten vom neuen Mitglied", "", show_new_member],["Exportiere Daten vom neuen Mitglied für EEG Faktura", "", export_for_faktura]]
+        """
+
+        # menubardata = [["Wähle eine Mail aus", "", load_Mail],["Zeige die Daten vom neuen Mitglied", "", show_new_member],["Exportiere Daten vom neuen Mitglied für EEG Faktura", "", export_for_faktura]]
+        menubardata = [["Wähle eine Mail aus", "", load_Mail],["Zeige die Daten vom neuen Mitglied", "", show_new_member]]
+
         # ["Lade Vorlage zu Faktura Export", "", load_faktura_new_member_export_template]
         return menubardata
 
@@ -814,10 +771,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 print(personswithinvoicesmasterdata)
                 personswithinvoicesmasterdata = personswithinvoicesmasterdata[["Name 1","Name 2","E-Mail"]].drop_duplicates()
 
-                def try_logging_in_f(user, pw):
+                def try_logging_in_f(user, pw, host):
                     print(f"try logging in IMAP server: {user} und pw: {pw}")
                     try:
-                        imap = imaplib.IMAP4_SSL(self.imap_server)
+                        imap = imaplib.IMAP4_SSL(host)
                         # # authenticate
                         imap.login(user, pw)
                         return True
@@ -826,7 +783,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 # either do the login prompt and then execute the function or just execute the funciton
                 # self.loginprompt = LoginPrompt(try_logging_in_f, title="Email Login")
-                logged_in = try_logging_in_f("info@gemeinwohlenergie-innsbruck.at", "MnAE4SssEvb4Dm")
+                logged_in = try_logging_in_f(self.config["my_mail"], self.config["my_mail_pw"], self.config["imap_server"])
                 if logged_in:
                     mailadressselection = MailAdressSelection(personswithinvoicesmasterdata["E-Mail"], title="Wähle die Personen aus, denen du eine Mail schreiben willst")
                     if mailadressselection.exec_():  # This blocks until dialog is closed
@@ -835,42 +792,44 @@ class MainWindow(QtWidgets.QMainWindow):
                         print("Returned from dialog:", selected_persons)
                     else:
                         print("Dialog canceled")
-                if selected_persons is not None:
-                    personswithinvoicesselected = personswithinvoicesmasterdata.loc[selected_persons,:]
-                    sendapproval = Sendapproval(personswithinvoicesselected["E-Mail"], title="Wähle die Personen aus, denen du eine Mail schreiben willst")
-                    if sendapproval.exec_():  # This blocks until dialog is closed
-                        send_y_n = sendapproval.result
-                        print("Returned from dialog:", send_y_n)
+                    if selected_persons is not None:
+                        personswithinvoicesselected = personswithinvoicesmasterdata.loc[selected_persons,:]
+                        sendapproval = Sendapproval(personswithinvoicesselected["E-Mail"], title="Wähle die Personen aus, denen du eine Mail schreiben willst")
+                        if sendapproval.exec_():  # This blocks until dialog is closed
+                            send_y_n = sendapproval.result
+                            print("Returned from dialog:", send_y_n)
+                        else:
+                            print("Dialog canceled")
+                        if send_y_n:
+                            print(f"Send Mails to {personswithinvoicesselected["E-Mail"]}")
+                            if not self.safepath_this_invoices:
+                                self.safepath_this_invoices = load_filepath(self, "In welchem Ordner sind die ganzen Rechnungen gespeichert?", pathisdir=True,homedir= self.home_directory)
+
+
+
+                            for ind, person_data in personswithinvoicesselected.iterrows():
+                                print(f"Send Mail to: {person_data['E-Mail']}")
+
+                                receivername = f"{person_data["Name 1"]}_{person_data["Name 2"]}"
+                                invoicequart = invoices.data["detailed"]["Abrechnung"].iloc[0]
+                                email_this = person_data["E-Mail"]
+                                invoices_year, invoices_quart = invoicequart.split("-")[-2], invoicequart.split("-")[-1]
+                                self.thisinvoices_year = invoices_year
+                                self.thisinvoice_quart = invoices_quart
+                                nameinvoicefile = f"Rechnung_{self.thisinvoices_year}_q{self.thisinvoice_quart}_{receivername}.pdf"
+
+                                fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
+                                send_mail_to_one_person(self.config["my_mail"],self.config["my_mail_pw"], self.config["imap_server"],self.config["EEG_name"],email_this,person_data["Name 1"],
+                                                        self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
+                                # send_mail_to_one_person(self.my_mail,self.my_mail_pw,"leander.stark@a1.net",person_data["Name 1"],
+                                #                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
+
+
+
+
+                        else: print("Dont send")
                     else:
-                        print("Dialog canceled")
-                    if send_y_n:
-                        print(f"Send Mails to {personswithinvoicesselected["E-Mail"]}")
-                        if not self.safepath_this_invoices:
-                            self.safepath_this_invoices = load_filepath(self, "In welchem Ordner sind die ganzen Rechnungen gespeichert?", pathisdir=True,homedir= self.home_directory)
-
-
-
-                        for ind, person_data in personswithinvoicesselected.iterrows():
-                            receivername = f"{person_data["Name 1"]}_{person_data["Name 2"]}"
-                            invoicequart = invoices.data["detailed"]["Abrechnung"].iloc[0]
-                            email_this = person_data["E-Mail"]
-                            invoices_year, invoices_quart = invoicequart.split("-")[-2], invoicequart.split("-")[-1]
-                            self.thisinvoices_year = invoices_year
-                            self.thisinvoice_quart = invoices_quart
-                            nameinvoicefile = f"Rechnung_{self.thisinvoices_year}_q{self.thisinvoice_quart}_{receivername}.pdf"
-
-                            fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
-                            send_mail_to_one_person(self.my_mail,self.my_mail_pw,email_this,person_data["Name 1"],
-                                                    self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
-                            # send_mail_to_one_person(self.my_mail,self.my_mail_pw,"leander.stark@a1.net",person_data["Name 1"],
-                            #                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
-
-
-
-
-                    else: print("Dont send")
-                else:
-                    print("Abort since nobody was selected")
+                        print("Abort since nobody was selected")
             else:
                 errorbox = QMessageBox()
                 text = "Für diesen Schritt müssen noch folgende Daten eingelesen werden:"
@@ -879,8 +838,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 errorbox.setText(text)
                 errorbox.exec_()
 
-            # for
-            #     # MailAdressSelection(self.emails, "An welche Mailadressen soll ich die Rechnungen schicken")
+                # for
+                #     # MailAdressSelection(self.emails, "An welche Mailadressen soll ich die Rechnungen schicken")
 
 
 

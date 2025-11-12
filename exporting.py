@@ -52,10 +52,10 @@ def check_doubles(invoices):
 
 
 
-def produce_sepa_export_dfs(invoices_selected_persons):
+def produce_sepa_export_dfs(invoices_selected_persons,EEG_name):
     debit,transfer, doublesprocess = check_doubles(invoices_selected_persons)
 
-    def create_one_line_debit(invoicelistline,datatype = "debit"):
+    def create_one_line_debit(invoicelistline,EEG_name,datatype = "debit"):
         print(invoicelistline["Empfänger Name"])
         columns_debit_export = ['Fälligkeitsdatum', 'Zahlungspflichtiger Name',
        'Zahlungspflichtiger Adresse', 'Zahlungspflichtiger Ort',
@@ -130,7 +130,7 @@ def produce_sepa_export_dfs(invoices_selected_persons):
             return y[1], y[2]
 
         year, quartal = get_quartal_out_of_str(invoicelistline["Abrechnung"])
-        exportline["Zahlungsreferenz/Verwendungszweck"] = f"Gemeinwohlenergie Rechung {year} Quartal {quartal}"
+        exportline["Zahlungsreferenz/Verwendungszweck"] = f"{EEG_name} Rechung {year} Quartal {quartal}"
 
         return exportline
 
