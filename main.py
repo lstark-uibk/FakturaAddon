@@ -695,13 +695,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def create_invoices_and_save():
             print("I try to create the invoices and the save it (also to nextcloud?)")
-            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,invoicedatarequired=True, invoicestemprequired=True, energydataoptional= True)
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True, energydataoptional= True)
             print(f"Check was {check}, datamissing {datamissing}")
-            if "Energiedaten" in datamissing:
-                errorbox = QMessageBox()
-                text = "Die Energiedaten fehlen, du kannst aber trotzdem fortfahren"
-                errorbox.setText(text)
-                errorbox.exec_()
+            # if "Energiedaten" in datamissing:
+            #     errorbox = QMessageBox()
+            #     text = "Die Energiedaten fehlen, du kannst aber trotzdem fortfahren"
+            #     errorbox.setText(text)
+            #     errorbox.exec_()
             if check:
                 # first create a dict with all the info for the invoice, then render the template, then do it for all persons.
                 self.safepath_this_invoices = load_filepath(self, "Wo soll ich die Rechnungen hinspeichern?.", pathisdir=True,homedir= self.home_directory)
@@ -732,7 +732,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             self.label.setText(message)
 
                     def task_for_worker(callback,finished):
-                        produce_invoices_and_save(self.energydata.data, invoices.data["detailed"], self.invoices.template,
+                        produce_invoices_and_save(self.energydata.data, invoices.data["detailed"], self.masterdata, self.invoices.template,
                                                   self.safepath_this_invoices,callback,finished)
 
                     dialog = StatusDialog()

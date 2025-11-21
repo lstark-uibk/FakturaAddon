@@ -1,0 +1,6 @@
+{"my_mail" : "",
+  "imap_server" : "mail.your-server.de",
+  "home_directory":"/home/leander/gei/Abrechnung",
+  "template_export_invoice":"/home/leander/gei/faktura/pythonProject/template_invoice.docx",
+  "template_email":  "/home/leander/gei/faktura/pythonProject/email_template.html"
+}

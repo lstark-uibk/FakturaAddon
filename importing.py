@@ -1,9 +1,11 @@
+import time
 from tempfile import template
 import datetime as dt
 from functools import partial
 from docxtpl import DocxTemplate
 import pandas as pd
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget, QVBoxLayout, QPushButton, QLabel,  QMessageBox, QDialog
+from PyQt5.QtCore import pyqtSignal, QThread, Qt
 from io import BytesIO
 from jinja2 import Environment, FileSystemLoader, PackageLoader, select_autoescape
 import os
@@ -155,16 +157,59 @@ def load_energy_data(filepath = "", nc = False, qov = False):
     print(f"Load {filepath}, qov: {qov}")
     if not nc:
         try:
-            # to acess the data you have to user multiindex.like energydata.data.loc[:,pd.IndexSlice["AT005120000000000000000030160301P",:,:,:]] or data.xs("Mario Buchinger",level="Name",axis=1)
-            # First entry is zählpunktnummer, dann Name, dann prod/cons dann Art der Daten
-            if qov:
-                data = pd.read_excel(filepath, sheet_name="QoV Log", skiprows=[7, 8, 9], header=[1, 2, 3, 6],
-                                        index_col=[0])
-            else:
-                data = pd.read_excel(filepath,sheet_name="Energiedaten",skiprows=[7,8,9], header=[1,2,3,6],index_col=[0])
-            newnameindex = {x:x.replace(" ","") for x in data.columns.get_level_values(level = "Name")}
-            data.index = pd.to_datetime(data.index, format = "%d.%m.%Y %H:%M:%S")
-            data = data.sort_index()
+            class LoadingDialog(QDialog):
+                def __init__(self, message="Please wait..."):
+                    super().__init__()
+                    self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # keep on top
+                    self.setWindowTitle("Loading")
+                    self.setModal(True)  # modal dialog
+                    self.resize(250, 80)
+
+                    layout = QVBoxLayout()
+                    self.label = QLabel(message)
+                    self.label.setAlignment(Qt.AlignCenter)
+                    layout.addWidget(self.label)
+                    self.setLayout(layout)
+
+
+            class Worker(QThread):
+                finished = pyqtSignal(pd.DataFrame)  # signal to return data
+                progress = pyqtSignal(str)  # optional signal for messages
+
+                def __init__(self, filepath, qov):
+                    super().__init__()
+                    self.filepath = filepath
+                    self.qov = qov
+
+                def run(self):
+                    self.progress.emit("Loading Excel file...")
+                    if self.qov:
+                        data = pd.read_excel(self.filepath, sheet_name="QoV Log", skiprows=[7, 8, 9], header=[1, 2, 3, 6],
+                                                index_col=[0])
+                    else:
+                        data = pd.read_excel(self.filepath,sheet_name="Energiedaten",skiprows=[7,8,9], header=[1,2,3,6],index_col=[0])
+                    self.finished.emit(data)
+
+            dlg = LoadingDialog("Processing, please wait...")
+            dlg.show()
+            df_container = {}
+            def on_finished(df):
+                df_container["df"] = df
+                print(df_container)
+            worker = Worker(filepath,qov)
+            worker.finished.connect(lambda df: dlg.close())
+            worker.finished.connect(on_finished)
+
+            worker.start()
+
+
+            dlg.exec()
+
+
+            print(df_container)
+
+
+
         except Exception as e:
             print(e)
             errorbox = QMessageBox()
@@ -174,7 +219,7 @@ def load_energy_data(filepath = "", nc = False, qov = False):
     else:
         print("Nextcloud loading")
 
-    return data
+    return df_container["df"]
 
 def load_faktura_member_export_template(filepath = "",nc =False, nc_instance = ''):
     print(f"Load {filepath}")
