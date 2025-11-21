@@ -1,3 +1,4 @@
 # .gitignore
 config.json
 template_invoice.docx
+email_template.html

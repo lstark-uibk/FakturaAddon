@@ -306,6 +306,7 @@ class MainWindow(QtWidgets.QMainWindow):
         def loadp_masterdata_from_fp(filepath):
             if filepath is not None:
                 masterdata = self.masterdata.load_data(filepath=filepath)
+                masterdata_meta = self.masterdata.load_metadata(filepath=filepath)
                 mailadresses = self.emails.load_data(filepath=filepath)
                 if masterdata is not None:
                     self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
@@ -695,7 +696,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def create_invoices_and_save():
             print("I try to create the invoices and the save it (also to nextcloud?)")
-            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True, energydataoptional= True)
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True)
             print(f"Check was {check}, datamissing {datamissing}")
             # if "Energiedaten" in datamissing:
             #     errorbox = QMessageBox()
@@ -820,7 +821,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                                 fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
                                 send_mail_to_one_person(self.config["my_mail"],self.config["my_mail_pw"], self.config["imap_server"],self.config["EEG_name"],email_this,person_data["Name 1"],
-                                                        self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
+                                                        self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile, masterdata)
                                 # send_mail_to_one_person(self.my_mail,self.my_mail_pw,"leander.stark@a1.net",person_data["Name 1"],
                                 #                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
 

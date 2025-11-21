@@ -375,7 +375,7 @@ class Sendapproval(QDialog):
         self.result = event
         self.accept()
 
-def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_email,receiver_forename,invquart,invyear, template, fp_to_invoice,port = 587):
+def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_email,receiver_forename,invquart,invyear, template,fp_to_invoice, masterdata,port = 587):
     email = EmailMessage()
 
     email['Subject'] = f"Rechnung {sender_name} {invyear} Quartal {invquart}"
@@ -384,7 +384,20 @@ def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_ema
     print(f"Sending Mail from {sender_email} with to {receiver_email} with subject {email['Subject']} with attachment {fp_to_invoice}...")
 
 
-    output_from_parsed_template = template.render(name=receiver_forename, quart = invquart, year = invyear)
+    output_from_parsed_template = template.render(name=receiver_forename,
+                                                  quart = invquart,
+                                                  year = invyear,
+                                                  community_name = masterdata.metadata['Bezeichnung'],
+                                                  community_companynumber = masterdata.metadata['Geschäftsnummer'],
+                                                  community_citycode = masterdata.metadata['PLZ'],
+                                                  community_city = masterdata.metadata['Wohnort'],
+                                                  community_street = masterdata.metadata['Straße'],
+                                                  community_streetnr = masterdata.metadata['StraßenNr.'],
+                                                  community_mail = masterdata.metadata['E-Mail'],
+                                                  community_website = masterdata.metadata['Web Seite'],
+                                                  community_IBAN = masterdata.metadata['IBAN'])
+
+
     plain_content = f"Hallo {receiver_forename}. \nAnbei findest du deine Rechnung für das {invquart}, {invyear} \n Mit lieben Grüßen, \n{sender_name} \n\n|"
     email.set_content(plain_content)  # Optional plain text
 

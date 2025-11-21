@@ -1,6 +1,6 @@
 import time
 from tempfile import template
-import datetime as dt
+import numpy as np
 from functools import partial
 from docxtpl import DocxTemplate
 import pandas as pd
@@ -158,7 +158,7 @@ def load_energy_data(filepath = "", nc = False, qov = False):
     if not nc:
         try:
             class LoadingDialog(QDialog):
-                def __init__(self, message="Please wait..."):
+                def __init__(self, message="Laden"):
                     super().__init__()
                     self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # keep on top
                     self.setWindowTitle("Loading")
@@ -190,7 +190,7 @@ def load_energy_data(filepath = "", nc = False, qov = False):
                         data = pd.read_excel(self.filepath,sheet_name="Energiedaten",skiprows=[7,8,9], header=[1,2,3,6],index_col=[0])
                     self.finished.emit(data)
 
-            dlg = LoadingDialog("Processing, please wait...")
+            dlg = LoadingDialog("Laden, bitte warten...")
             dlg.show()
             df_container = {}
             def on_finished(df):
@@ -273,6 +273,29 @@ def load_masterdata(filepath, nc = False):
         print("Nextcloud loading (not implemented)")
     return data
 
+def load_masterdata_meta(filepath):
+    print(f"Load Metadata from {filepath}")
+    df = pd.read_excel(filepath, header=None, dtype=str)
+
+    result = {}
+    for col in df.columns:
+        col_values = df[col].tolist()  # remove empty cells
+        col_values.append(np.nan)
+        print(col_values)
+        for i in range(len(col_values) - 2):
+            this = col_values[i]
+            next = col_values[i + 1]
+            nextnext = col_values[i + 2]
+            if not pd.isna(col_values[i + 1]) and pd.isna(col_values[i + 2]):
+                result[this] = next
+                print(this, next)
+            else:
+                print("no viable")
+
+            i += 1
+    return result
+
+
 def check_whether_data_exists(mandates = None,masterdata = None,invoices = None,energydata = None, emails = None,
                               mandatesrequired = False, invoicedatarequired = False, masterdatarequired = False,
                               masterdataexporttemprequired = False, emailstemprequired = False,invoicestemprequired = False,energymetadatarequired = False,
@@ -322,7 +345,7 @@ def check_whether_data_exists(mandates = None,masterdata = None,invoices = None,
 
 
 
-masterdata = Data(load_masterdata,"")
+masterdata = Data(load_masterdata,"",F_for_metadata_loading= load_masterdata_meta)
 invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
 energydata = Data(load_energy_data,"", F_for_metadata_loading=partial(load_energy_data,qov = True))

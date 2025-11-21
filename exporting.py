@@ -215,6 +215,7 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
     # fullname = f"{personaldata['Name 1']} {personaldata['Name 2']}"
     debit,transfer, doublesprocess = check_doubles(invoicedata)
     # debit, transfer = debit[cols_for_tbl], transfer[cols_for_tbl]
+    energydata.index = pd.to_datetime(energydata.index, format="%d.%m.%Y %H:%M:%S")
     nr_all_persons = invoicedata["Empfänger Name"].unique().shape[0]
     for index,name in enumerate(invoicedata["Empfänger Name"].unique()):
     # for index, name in enumerate(["Gerhard Halder"]):
@@ -264,6 +265,17 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
         parsing_dict["EmpfängerAdresse2"] =invoicethis["Empfänger Adresse 2"].values[0]
         parsing_dict["invoiceitemstbl_contents"]= all_position_for_tbl.values.tolist()
         parsing_dict["Rechnung_Gutschrift"] = total_transfer_debit
+        parsing_dict["community_name"] = masterdata.metadata['Bezeichnung']
+        parsing_dict["community_street"] = masterdata.metadata['Straße']
+        parsing_dict["community_streetnr"] = masterdata.metadata['StraßenNr.']
+        parsing_dict["community_citycode"] = masterdata.metadata['PLZ']
+        parsing_dict["community_city"] = masterdata.metadata['Wohnort']
+        parsing_dict["community_phone"] = masterdata.metadata['TelefonNr.']
+        parsing_dict["community_website"] = masterdata.metadata['Web Seite']
+        parsing_dict["community_IBAN"] = masterdata.metadata['IBAN']
+        parsing_dict["community_mail"] = masterdata.metadata['E-Mail']
+        parsing_dict["community_companynumber"] = masterdata.metadata['Geschäftsnummer']
+
         invoicenumberstr = ""
         if total_transfer_debit == "Rechnung":
             invoicenumberstr = debits_this["Nummer"].iloc[0]
@@ -363,10 +375,10 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                     else:
                         parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% des Verbrauchs in diesem Quartal.\n"
 
+
                     # dailysums_total_energy = total_energy_consumption.groupby(total_energy_consumption.index.strftime('%d.%m.%Y')).sum()
 
-                energy_through_evu_weeklysum = energy_through_evu.groupby(
-                    energy_through_evu.index.strftime('%Y-%W')).sum()
+                energy_through_evu_weeklysum = energy_through_evu.groupby(energy_through_evu.index.strftime('%Y-%W')).sum()
                 xaxis_energy_through_evu = []
                 xaxis_energy_through_eeg = []
                 for week, weektotalenergy in energy_through_evu.groupby(energy_through_evu.index.strftime('%Y-%W')):
