@@ -1,0 +1,3 @@
+Durchführungsdatum;Empfänger Name;Empfänger Adresse;Empfänger Ort;Empfänger IBAN;Empfänger BIC;Betrag in EUR;Zahlungsreferenz/Verwendungszweck;Auftraggeberinformation;Geschäftsvorfallcode;Dringlichkeit;Auftraggeber IBAN;Abweichender Auftraggeber
+'DD.MM.YYYY';str;str;str;str;str;float;str;str;str;str;AT963412900008939258;str
+
