@@ -99,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(20, 20)
         self.second_window = None
         self.exportwindow = None
-        with open("config.json", 'r') as file:
+        with open("cleandata/config.json", 'r') as file:
             self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]
