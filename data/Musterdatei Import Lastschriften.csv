@@ -1,2 +1,0 @@
-Fälligkeitsdatum;Zahlungspflichtiger Name;Zahlungspflichtiger Adresse;Zahlungspflichtiger Ort;Zahlungspflichtiger IBAN;Zahlungspflichtiger BIC;Betrag in EUR;Zahlungsreferenz/Verwendungszweck;Auftraggeberinformation;Geschäftsvorfallcode;Auftraggeber IBAN;Abweichender Auftraggeber;Mandatsausstellungsdatum;Creditor ID;Mandatsreferenz;Art der Verwendung;Firmenlastschrift
-%d.%m.%Y;str;str;str;str;str;float;str;str;str;AT963412900008939258;str;%d.%m.%Y;AT94ZZZ00000079821;str;str;str

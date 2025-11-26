@@ -1,9 +1,0 @@
-{% extends "email_template.html" %}
-{% block content %}
-    <h1>Movies</h1>
-    <p>
-      {% for movie in data['movies'] %} }
-      {{ movie['title'] }}
-     {% endfor %}
-    </p>
-{% endblock %}

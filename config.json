@@ -1,0 +1,8 @@
+{"my_mail" : "info@gemeinwohlenergie-innsbruck.at",
+  "imap_server" : "mail.your-server.de",
+  "my_mail_pw": "MnAE4SssEvb4Dm",
+  "home_directory":"",
+  "template_export_invoice":"template_invoice_clean.docx",
+  "template_email":  "email_template.html",
+  "EEG_name": "EEG_NAME"
+}
