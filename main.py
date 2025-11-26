@@ -325,14 +325,19 @@ class MainWindow(QtWidgets.QMainWindow):
         def load_energydata_fp(filepath, load_qov = False):
             if filepath is not None:
                 if load_qov:
-                    energydata = self.energydata.load_metadata(filepath=filepath)
+                    energydataqov = self.energydata.load_metadata(filepath=filepath)
                 else:
                     energydata = self.energydata.load_data(filepath=filepath)
 
                 if energydata is not None:
                     self.reload_table_view("0_1", energydata)
-                    self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
-                        self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten"].index, "Speicherort"] = filepath
+                    if load_qov:
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                            self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten QOV"].index, "Speicherort"] = filepath
+                    else:
+                        self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
+                            self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten"].index, "Speicherort"] = filepath
+
                     updatetable_1_1()
             else:
                 return None

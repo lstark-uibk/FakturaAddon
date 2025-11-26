@@ -139,7 +139,7 @@ def produce_sepa_export_dfs(invoices_selected_persons,EEG_name):
     serieslist = []
     # missingmandates = []
     for index, line in debit.iterrows():
-        exportline = create_one_line_debit(line,datatype="debit")
+        exportline = create_one_line_debit(line,EEG_name,datatype="debit")
         if exportline is not None:
             serieslist.append(exportline)
             # if not matchingmandate:
@@ -148,7 +148,7 @@ def produce_sepa_export_dfs(invoices_selected_persons,EEG_name):
 
     serieslist = []
     for index, line in transfer.iterrows():
-        exportline = create_one_line_debit(line,datatype="transfer")
+        exportline = create_one_line_debit(line,EEG_name,datatype="transfer")
         if exportline is not None:
             serieslist.append(exportline)
     transferexport = pd.concat(serieslist, axis=1).T
@@ -467,11 +467,13 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
         invoicetemplate.save(savepathdocx)
 
         def generate_pdf(doc_path, path):
+            pdf_path = pdf_path = doc_path.rsplit(".", 1)[0] + ".pdf"
             try:
-                convert(doc_path, path)
+                convert(doc_path, pdf_path)
                 print("convert docx to pdf on windows with word installed")
 
             except:
+
                 try:
                     subprocess.call(['soffice',
                                      # '--headless',
