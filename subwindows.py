@@ -3,7 +3,6 @@ import PyQt5.QtGui as QtGui
 from matplotlib.pyplot import title
 from bs4 import BeautifulSoup
 
-from nc_py_api import Nextcloud
 import imaplib
 import email
 from email.header import decode_header
