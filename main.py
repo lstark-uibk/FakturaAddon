@@ -2,7 +2,6 @@ import datetime
 
 import numpy as np
 import json
-from nc_py_api import Nextcloud
 from functools import partial
 import pandas as pd
 import os
@@ -270,17 +269,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
                 if prompt == QMessageBox.Yes:
-                    def try_logging_in_f(user,pw):
-                        print(f"try logging in nextcloud with user: {user} und pw: {pw}")
-                        nc_instance = Nextcloud(nextcloud_url=self.nc_url, nc_auth_user=user,
-                                                nc_auth_pass=pw)
-                        nc_instance.capabilities
-                        self.nc_auth_user = user
-                        self.nc_auth_pass = pw
-                        load_faktura_template(self.nc_faktura_export_template_fp, nc_loading=True, nc_instance=nc_instance)
-                    if not self.nc_auth_user:
-                        self.loginprompt = LoginPrompt(try_logging_in_f, title="Nextcloud Login")
-                        self.loginprompt.show()
+                    pass
+
                 else:
                     filepath = load_filepath(self,"Lade Vorlage zu Faktura Export",homedir= self.home_directory)
                     load_faktura_template(filepath = filepath)
@@ -700,7 +690,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         def create_invoices_and_save():
-            print("I try to create the invoices and the save it (also to nextcloud?)")
+            print("I try to create the invoices and the save it.")
             check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True)
             print(f"Check was {check}, datamissing {datamissing}")
             # if "Energiedaten" in datamissing:
