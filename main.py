@@ -1,5 +1,5 @@
 import datetime
-
+import subprocess
 import numpy as np
 import json
 from functools import partial
@@ -33,9 +33,10 @@ class TableView(QtWidgets.QTableWidget):
         self.resizeRowsToContents()
         if clickable:
             self.itemClicked.connect(self.on_item_clicked)
-    def set_new_data(self,data, editable = False):
-        self.data = data.to_dict(orient="list")
-        self.setData(data.shape[0],data.shape[1], editable= editable)
+    def set_new_data(self,data, editable = False, maxrows = 50):
+        datacopy = data.copy().iloc[0:maxrows]
+        self.data = datacopy.to_dict(orient="list")
+        self.setData(datacopy.shape[0],datacopy.shape[1], editable= editable)
     def setData(self,rowcount = 0, colcount = 0, editable = False):
         self.setColumnCount(colcount)
         self.setRowCount(rowcount)
@@ -56,11 +57,11 @@ class TableView(QtWidgets.QTableWidget):
         self.resizeRowsToContents()
     def on_item_clicked(self, item):
         row_clicked = item.row()
-        try:
-            self.functions_on_row_clicked[row_clicked]()
-        except Exception as Error:
-            print("Could not run the function for this row.")
-            print(Error)
+        # try:
+        self.functions_on_row_clicked[row_clicked]()
+        # except Exception as Error:
+        #     print("Could not run the function for this row.")
+        #     print(Error)
 
 
 
@@ -98,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(20, 20)
         self.second_window = None
         self.exportwindow = None
-        with open("cleandata/config.json", 'r') as file:
+        with open("config.json", 'r') as file:
             self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]
@@ -314,17 +315,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def load_energydata_fp(filepath, load_qov = False):
             if filepath is not None:
+                energydata = None
+                energydataqov = None
                 if load_qov:
                     energydataqov = self.energydata.load_metadata(filepath=filepath)
                 else:
                     energydata = self.energydata.load_data(filepath=filepath)
 
-                if energydata is not None:
-                    self.reload_table_view("0_1", energydata)
+                if (energydata is not None) or (energydataqov is not None):
                     if load_qov:
+                        self.reload_table_view("0_1", energydataqov)
                         self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
                             self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten QOV"].index, "Speicherort"] = filepath
                     else:
+                        self.reload_table_view("0_1", energydata)
                         self.loaded_filepaths.loc[self.loaded_filepaths["Daten"][
                             self.loaded_filepaths["Daten"] == "EEG Faktura Quartalsenergiedaten"].index, "Speicherort"] = filepath
 
@@ -676,9 +680,27 @@ class MainWindow(QtWidgets.QMainWindow):
                     line = [energydata.metadata.index[start].date(),energydata.metadata.index[end].date(),shownames,timerange,', '.join(names),', '.join(Metering_points)]
                     report_list.append(line)
                 report_df = pd.DataFrame(report_list,columns = ["Start Datum", "End Datum", "Namen Übersicht", "Zeitraum Details","Namen Details", "ZP Details"])
-                self.safepath_this_energyreport = load_filepath(self, "Wo soll den Überprüfungsreport hinspeichern?.", fileex=False, defaultfilename=f"Energydata_QoV_Report_{energydata.metadata.index[0].strftime("%Y_%m_%d")}-{energydata.metadata.index[-1].strftime("%Y_%m_%d")}",homedir= self.home_directory)
-                report_df.to_excel(self.safepath_this_energyreport)
-                print(f"Save qov Report to: {self.safepath_this_energyreport}")
+                if report_df.shape[0] == 0:
+                    message = QMessageBox()
+                    text = "Überprüfung durchgeführt. \nAlle QoV Energiedaten sind mindestens L2"
+                    message.setText(text)
+                    message.exec_()
+                else:
+                    self.safepath_this_energyreport = load_filepath(self,
+                                                                    "Wo soll den Überprüfungsreport hinspeichern?.",
+                                                                    fileex=False,
+                                                                    defaultfilename=f"Energydata_QoV_Report_{energydata.metadata.index[0].strftime("%Y_%m_%d")}-{energydata.metadata.index[-1].strftime("%Y_%m_%d")}.xlsx",
+                                                                    homedir=self.home_directory)
+                    if not self.safepath_this_energyreport.lower().endswith(".xslx"):
+                        self.safepath_this_energyreport += ".xlsx"
+                    print(f"Save qov Report to: {self.safepath_this_energyreport}")
+                    report_df.to_excel(self.safepath_this_energyreport)
+                    try:
+                        os.startfile(self.safepath_this_energyreport)
+                    except:
+                        subprocess.Popen(["libreoffice", self.safepath_this_energyreport])
+
+
 
             else:
                 errorbox = QMessageBox()

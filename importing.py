@@ -156,70 +156,75 @@ def load_energy_qovdata(filepath = "", nc = False):
 def load_energy_data(filepath = "", nc = False, qov = False):
     print(f"Load {filepath}, qov: {qov}")
     if not nc:
-        try:
-            class LoadingDialog(QDialog):
-                def __init__(self, message="Laden"):
-                    super().__init__()
-                    self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # keep on top
-                    self.setWindowTitle("Loading")
-                    self.setModal(True)  # modal dialog
-                    self.resize(250, 80)
+        class LoadingDialog(QDialog):
+            def __init__(self, message="Laden"):
+                super().__init__()
+                self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # keep on top
+                self.setWindowTitle("Loading")
+                self.setModal(True)  # modal dialog
+                self.resize(250, 80)
 
-                    layout = QVBoxLayout()
-                    self.label = QLabel(message)
-                    self.label.setAlignment(Qt.AlignCenter)
-                    layout.addWidget(self.label)
-                    self.setLayout(layout)
+                layout = QVBoxLayout()
+                self.label = QLabel(message)
+                self.label.setAlignment(Qt.AlignCenter)
+                layout.addWidget(self.label)
+                self.setLayout(layout)
 
 
-            class Worker(QThread):
-                finished = pyqtSignal(pd.DataFrame)  # signal to return data
-                progress = pyqtSignal(str)  # optional signal for messages
+        class Worker(QThread):
+            finished = pyqtSignal(list)  # signal to return data
+            progress = pyqtSignal(str)  # optional signal for messages
 
-                def __init__(self, filepath, qov):
-                    super().__init__()
-                    self.filepath = filepath
-                    self.qov = qov
+            def __init__(self, filepath, qov):
+                super().__init__()
+                self.filepath = filepath
+                self.qov = qov
 
-                def run(self):
-                    self.progress.emit("Loading Excel file...")
+            def run(self):
+                self.progress.emit("Loading Excel file...")
+                try:
                     if self.qov:
                         data = pd.read_excel(self.filepath, sheet_name="QoV Log", skiprows=[7, 8, 9], header=[1, 2, 3, 6],
                                                 index_col=[0])
                     else:
                         data = pd.read_excel(self.filepath,sheet_name="Energiedaten",skiprows=[7,8,9], header=[1,2,3,6],index_col=[0])
-                    self.finished.emit(data)
+                    data.index = pd.to_datetime(data.index, format="%d.%m.%Y %H:%M:%S")
+                    data = data.sort_index()
 
-            dlg = LoadingDialog("Laden, bitte warten...")
-            dlg.show()
-            df_container = {}
-            def on_finished(df):
-                df_container["df"] = df
+                    self.finished.emit([True,data])
+                except Exception as e:
+                    self.finished.emit([False,f"There was an error loading: {e}"])
+
+        dlg = LoadingDialog("Laden, bitte warten...")
+        dlg.show()
+        df_container = {}
+        def on_finished(emit):
+            if emit[0]:
+                df_container["df"] = emit[1]
                 print(df_container)
-            worker = Worker(filepath,qov)
-            worker.finished.connect(lambda df: dlg.close())
-            worker.finished.connect(on_finished)
 
-            worker.start()
+            else:
+                print(emit[1])
+                errorbox = QMessageBox()
+                errorbox.setText("Ausgewählte Datei ist nicht lesbar (ist sie im richtigen Format?)")
+                errorbox.exec_()
+                return
+        worker = Worker(filepath,qov)
+        worker.finished.connect(lambda df: dlg.close())
+        worker.finished.connect(on_finished)
+
+        worker.start()
 
 
-            dlg.exec()
+        dlg.exec()
 
 
-            print(df_container)
-
-
-
-        except Exception as e:
-            print(e)
-            errorbox = QMessageBox()
-            errorbox.setText("Ausgewählte Date ist nicht lesbar (ist sie im richtigen Format?)")
-            errorbox.exec_()
-            return
     else:
         print("Nextcloud loading")
-
-    return df_container["df"]
+    if df_container:
+        return df_container["df"]
+    else:
+        return None
 
 def load_faktura_member_export_template(filepath = "",nc =False, nc_instance = ''):
     print(f"Load {filepath}")
