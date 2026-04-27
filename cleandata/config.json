@@ -1,7 +1,7 @@
 {"my_mail" : "",
   "imap_server" : "mail.your-server.de",
   "my_mail_pw": "",
-  "home_directory":"",
+  "home_directory":"/home/leander/gei/Abrechnung/2026/",
   "template_export_invoice":"cleandata/template_invoice_clean.docx",
   "template_email":  "cleandata/email_template_clean.html",
   "EEG_name": "EEG_NAME"

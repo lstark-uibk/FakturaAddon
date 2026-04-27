@@ -355,3 +355,4 @@ invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
 energydata = Data(load_energy_data,"", F_for_metadata_loading=partial(load_energy_data,qov = True))
 newmember = Data(load_new_member_data,load_faktura_member_export_template)
+

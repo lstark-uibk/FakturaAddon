@@ -270,11 +270,11 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
         parsing_dict["community_streetnr"] = masterdata.metadata['StraßenNr.']
         parsing_dict["community_citycode"] = masterdata.metadata['PLZ']
         parsing_dict["community_city"] = masterdata.metadata['Wohnort']
-        parsing_dict["community_phone"] = masterdata.metadata['TelefonNr.']
+        # parsing_dict["community_phone"] = masterdata.metadata['TelefonNr.']
         parsing_dict["community_website"] = masterdata.metadata['Web Seite']
         parsing_dict["community_IBAN"] = masterdata.metadata['IBAN']
         parsing_dict["community_mail"] = masterdata.metadata['E-Mail']
-        parsing_dict["community_companynumber"] = masterdata.metadata['Geschäftsnummer']
+        # parsing_dict["community_companynumber"] = masterdata.metadata['Geschäftsnummer']
 
         invoicenumberstr = ""
         if total_transfer_debit == "Rechnung":
@@ -331,50 +331,103 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
             0]))]  # take nr meteringpoints hatches
         hatchnr = -1
         parsing_dict["TextfürVerbrauch"] = ""
+        plotting_single = True
+
+        def plotting_one_quantity(axs, xaxis_energy_through_evu, xaxis_energy_through_eeg, xaxis_weekdays,
+                                  energy_through_evu_weeklysum, energy_through_eeg_weeklysum,
+                                  dailyhourmean_energy_through_evu, dailyhourmean_through_eeg,
+                                  energy_through_evu_weekday, energy_through_eg_weekday,
+                                  barwidth, plottext1, plottext2, hatch, edgecolor
+                                  ):
+
+            axs[1].bar(xaxis_energy_through_evu, energy_through_evu_weeklysum.values.flatten(), width=barwidth,
+                       label=plottext1,
+                       color="#69a4dc", hatch=hatch, edgecolor=edgecolor)
+            # print(f"energy_through_evu_weeklysum:{energy_through_evu_weeklysum}")
+
+            axs[1].bar(xaxis_energy_through_eeg, energy_through_eeg_weeklysum.values.flatten(), width=barwidth,
+                       label=plottext2,
+                       color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+            # print(f"energy_through_evu_weeklysum:{energy_through_eeg_weeklysum}")
+            axs[1].xaxis.set_major_locator(MonthLocator())
+            axs[1].xaxis.set_major_formatter(DateFormatter('%b %Y'))
+            # axs[1].xaxis.set_label_position("right")
+            axs[1].set_ylabel("kWh")
+
+            barwidth = 0.4
+            axs[2].bar(dailyhourmean_energy_through_evu.index - 0.5 * barwidth,
+                       dailyhourmean_energy_through_evu.values.flatten(), width=barwidth, color="#69a4dc", hatch=hatch,
+                       edgecolor=edgecolor)
+            axs[2].bar(dailyhourmean_through_eeg.index + 0.5 * barwidth, dailyhourmean_through_eeg.values.flatten(),
+                       width=barwidth, color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+            axs[2].set_xticks([0, 6, 12, 18, 24])
+            axs[2].set_xticklabels(["0 Uhr", "6 Uhr", "12 Uhr", "18 Uhr", "24 Uhr"])
+            axs[2].set_ylabel("kW")
+
+            barwidth = 0.4
+            axs[3].bar(np.linspace(0, 6, 7) - 0.5 * barwidth, energy_through_evu_weekday.flatten(), width=barwidth,
+                       color="#69a4dc", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+            axs[3].bar(np.linspace(0, 6, 7) + 0.5 * barwidth, energy_through_eg_weekday.flatten(), width=barwidth,
+                       color="#f8ae42", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+            axs[3].set_ylabel("kWh")
+            axs[1].legend(fontsize='small', loc=1, bbox_to_anchor=(0.8, 1.22))
+
+
         for energydirection in energydirections.unique():
             for meteringpointid in meteringpointids.unique():
                 hatchnr += 1
-                hatch = hatches[hatchnr]
-                edgecolor = edgecolors[hatchnr]
-                print(energydirection, meteringpointid, hatch)
+                if hatchnr < 5: # only make plot with each metering point if less than 4 metering point
+                    print(energydirection, meteringpointid, hatch)
+                    plotting_single = False
+                    hatch = hatches[hatchnr]
+                    edgecolor = edgecolors[hatchnr]
+                else:
+                    plotting_single = False
+
+
 
                 if energydirection == "GENERATION":
-                    total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
-                    "Gesamte gemeinschaftliche Erzeugung [KWH]"]].sort_index()
+                    try:
+                        total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                        "Gesamte gemeinschaftliche Erzeugung [KWH]"]].sort_index()
 
-                    energy_through_evu = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
-                    "Gesamt/Überschusserzeugung, Gemeinschaftsüberschuss [KWH]"]].sort_index()
-                    energy_through_eg = pd.DataFrame(
-                        (np.nan_to_num(total_energy.values, 0) - np.nan_to_num(energy_through_evu.values, 0)),
-                        index=total_energy.index)
+                        energy_through_evu = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                        "Gesamt/Überschusserzeugung, Gemeinschaftsüberschuss [KWH]"]].sort_index()
+                        energy_through_eg = pd.DataFrame(
+                            (np.nan_to_num(total_energy.values, 0) - np.nan_to_num(energy_through_evu.values, 0)),
+                            index=total_energy.index)
 
-                    plottext1 = f"Energielieferung an außerhalb der Energiegemeinschaft von ZP {meteringpointid[-6:]}"
-                    plottext2 = f"Energielieferung über unsere Energiegemeinschaft von ZP {meteringpointid[-6:]}"
-                    totalsumeg = np.nansum(energy_through_eg.values)
-                    shareeg = totalsumeg / np.nansum(total_energy.values) * 100
-                    if meteringpointids.unique().shape[0] == 1:
-                        parsing_dict[
-                            "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh an die Energiegemeischaft verkauft. \nDies ist {shareeg:.1f}% deiner gesamten erzeugten Energie in diesem Quartal."
-                    else:
-                        parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh an die Energiegemeischaft gelifert. \nDies ist {shareeg:.1f}% der erzeugten Energie in diesem Quartal.\n"
+                        plottext1 = f"Energielieferung an außerhalb der Energiegemeinschaft von ZP {meteringpointid[-6:]}"
+                        plottext2 = f"Energielieferung über unsere Energiegemeinschaft von ZP {meteringpointid[-6:]}"
+                        totalsumeg = np.nansum(energy_through_eg.values)
+                        shareeg = totalsumeg / np.nansum(total_energy.values) * 100
+                        if meteringpointids.unique().shape[0] == 1:
+                            parsing_dict[
+                                "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh an die Energiegemeischaft verkauft. \nDies ist {shareeg:.1f}% deiner gesamten erzeugten Energie in diesem Quartal."
+                        else:
+                            parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh an die Energiegemeischaft gelifert. \nDies ist {shareeg:.1f}% der erzeugten Energie in diesem Quartal.\n"
+                    except:
+                        pass
                 else:
-                    total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
-                    "Gesamtverbrauch lt. Messung (bei Teilnahme gem. Erzeugung) [KWH]"]].sort_index()
-                    energy_through_eg = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
-                    "Eigendeckung gemeinschaftliche Erzeugung [KWH]"]].sort_index()
-                    energy_through_evu = pd.DataFrame((total_energy.values - energy_through_eg.values),
-                                                      index=total_energy.index)
+                    try:
+                        total_energy = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                        "Gesamtverbrauch lt. Messung (bei Teilnahme gem. Erzeugung) [KWH]"]].sort_index()
+                        energy_through_eg = energydata.loc[:, pd.IndexSlice[meteringpointid, name, energydirection,
+                        "Eigendeckung gemeinschaftliche Erzeugung [KWH]"]].sort_index()
+                        energy_through_evu = pd.DataFrame((total_energy.values - energy_through_eg.values),
+                                                          index=total_energy.index)
 
-                    plottext1 = f"Energiebezug von Stromlieferant für ZP {meteringpointid[-6:]}"
-                    plottext2 = f"Energiebezug über unsere Energiegemeinschaft für ZP {meteringpointid[-6:]}"
-                    totalsumeg = np.nansum(energy_through_eg.values)
-                    shareeg = totalsumeg / np.nansum(total_energy.values) * 100
-                    if meteringpointids.unique().shape[0] == 1:
-                        parsing_dict[
-                            "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% deines Gesamtenergieverbrauchs in diesem Quartal."
-                    else:
-                        parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% des Verbrauchs in diesem Quartal.\n"
-
+                        plottext1 = f"Energiebezug von Stromlieferant für ZP {meteringpointid[-6:]}"
+                        plottext2 = f"Energiebezug über unsere Energiegemeinschaft für ZP {meteringpointid[-6:]}"
+                        totalsumeg = np.nansum(energy_through_eg.values)
+                        shareeg = totalsumeg / np.nansum(total_energy.values) * 100
+                        if meteringpointids.unique().shape[0] == 1:
+                            parsing_dict[
+                                "TextfürVerbrauch"] = f"Insgesamt wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% deines Gesamtenergieverbrauchs in diesem Quartal."
+                        else:
+                            parsing_dict["TextfürVerbrauch"] += f"Von ZP {meteringpointid[-6:]} wurden {totalsumeg:.1f}kWh über die Energiegemeischaft bezogen. \nDies ist {shareeg:.1f}% des Verbrauchs in diesem Quartal.\n"
+                    except:
+                        print("Plotting hat nicht geklappt")
 
                     # dailysums_total_energy = total_energy_consumption.groupby(total_energy_consumption.index.strftime('%d.%m.%Y')).sum()
 
@@ -412,39 +465,45 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                 energy_through_eg_weekday = np.roll(energy_through_eg_weekday.values, shift=-1,
                                                     axis=0).T  # because it starts with sunday roll by one day
                 xaxis_weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
-
-                axs[1].bar(xaxis_energy_through_evu, energy_through_evu_weeklysum.values.flatten(), width=barwidth,
-                           label=plottext1,
-                           color="#69a4dc", hatch=hatch, edgecolor=edgecolor)
-                # print(f"energy_through_evu_weeklysum:{energy_through_evu_weeklysum}")
-
-
-                axs[1].bar(xaxis_energy_through_eeg, energy_through_eeg_weeklysum.values.flatten(), width=barwidth,
-                           label=plottext2,
-                           color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
-                # print(f"energy_through_evu_weeklysum:{energy_through_eeg_weeklysum}")
-                axs[1].xaxis.set_major_locator(MonthLocator())
-                axs[1].xaxis.set_major_formatter(DateFormatter('%b %Y'))
-                # axs[1].xaxis.set_label_position("right")
-                axs[1].set_ylabel("kWh")
-
-                barwidth = 0.4
-                axs[2].bar(dailyhourmean_energy_through_evu.index - 0.5 * barwidth,
-                           dailyhourmean_energy_through_evu.values.flatten(), width=barwidth, color="#69a4dc", hatch=hatch,
-                           edgecolor=edgecolor)
-                axs[2].bar(dailyhourmean_through_eeg.index + 0.5 * barwidth, dailyhourmean_through_eeg.values.flatten(),
-                           width=barwidth, color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
-                axs[2].set_xticks([0, 6, 12, 18, 24])
-                axs[2].set_xticklabels(["0 Uhr", "6 Uhr", "12 Uhr", "18 Uhr", "24 Uhr"])
-                axs[2].set_ylabel("kW")
-
-                barwidth = 0.4
-                axs[3].bar(np.linspace(0, 6, 7) - 0.5 * barwidth, energy_through_evu_weekday.flatten(), width=barwidth,
-                           color="#69a4dc", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
-                axs[3].bar(np.linspace(0, 6, 7) + 0.5 * barwidth, energy_through_eg_weekday.flatten(), width=barwidth,
-                           color="#f8ae42", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
-                axs[3].set_ylabel("kWh")
-                axs[1].legend(fontsize='small',loc = 1,bbox_to_anchor = (0.8,1.22))
+                if plotting_single:
+                    plotting_one_quantity(axs, xaxis_energy_through_evu, xaxis_energy_through_eeg, xaxis_weekdays,
+                                          energy_through_evu_weeklysum, energy_through_eeg_weeklysum,
+                                          dailyhourmean_energy_through_evu, dailyhourmean_through_eeg,
+                                          energy_through_evu_weekday, energy_through_eg_weekday,
+                                          barwidth, plottext1, plottext2, hatch, edgecolor
+                                          )
+                    # axs[1].bar(xaxis_energy_through_evu, energy_through_evu_weeklysum.values.flatten(), width=barwidth,
+                    #            label=plottext1,
+                    #            color="#69a4dc", hatch=hatch, edgecolor=edgecolor)
+                    # # print(f"energy_through_evu_weeklysum:{energy_through_evu_weeklysum}")
+                    #
+                    #
+                    # axs[1].bar(xaxis_energy_through_eeg, energy_through_eeg_weeklysum.values.flatten(), width=barwidth,
+                    #            label=plottext2,
+                    #            color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+                    # # print(f"energy_through_evu_weeklysum:{energy_through_eeg_weeklysum}")
+                    # axs[1].xaxis.set_major_locator(MonthLocator())
+                    # axs[1].xaxis.set_major_formatter(DateFormatter('%b %Y'))
+                    # # axs[1].xaxis.set_label_position("right")
+                    # axs[1].set_ylabel("kWh")
+                    #
+                    # barwidth = 0.4
+                    # axs[2].bar(dailyhourmean_energy_through_evu.index - 0.5 * barwidth,
+                    #            dailyhourmean_energy_through_evu.values.flatten(), width=barwidth, color="#69a4dc", hatch=hatch,
+                    #            edgecolor=edgecolor)
+                    # axs[2].bar(dailyhourmean_through_eeg.index + 0.5 * barwidth, dailyhourmean_through_eeg.values.flatten(),
+                    #            width=barwidth, color="#f8ae42", hatch=hatch, edgecolor=edgecolor)
+                    # axs[2].set_xticks([0, 6, 12, 18, 24])
+                    # axs[2].set_xticklabels(["0 Uhr", "6 Uhr", "12 Uhr", "18 Uhr", "24 Uhr"])
+                    # axs[2].set_ylabel("kW")
+                    #
+                    # barwidth = 0.4
+                    # axs[3].bar(np.linspace(0, 6, 7) - 0.5 * barwidth, energy_through_evu_weekday.flatten(), width=barwidth,
+                    #            color="#69a4dc", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+                    # axs[3].bar(np.linspace(0, 6, 7) + 0.5 * barwidth, energy_through_eg_weekday.flatten(), width=barwidth,
+                    #            color="#f8ae42", tick_label=xaxis_weekdays, hatch=hatch, edgecolor=edgecolor)
+                    # axs[3].set_ylabel("kWh")
+                    # axs[1].legend(fontsize='small',loc = 1,bbox_to_anchor = (0.8,1.22))
 
         invoicetemplate.render(parsing_dict)
         # fig.set_size(3.49, 1.97)
