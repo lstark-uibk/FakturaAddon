@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="cleandata">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="make prosumer possible">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cleandata/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/cleandata/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/exporting.py" beforeDir="false" afterPath="$PROJECT_DIR$/exporting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,7 +96,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.main">
     <configuration name="NPV_calculation" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -327,11 +327,11 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.exporting" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.tests" />
         <item itemvalue="Python.emailing" />
-        <item itemvalue="Python.exporting" />
       </list>
     </recent_temporary>
   </component>
@@ -578,7 +578,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764327504769</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="make prosumer possible">
+      <option name="closed" value="true" />
+      <created>1777279766496</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1777279766496</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -632,7 +640,8 @@
     <MESSAGE value="delete nextcloud" />
     <MESSAGE value="Energydata loading faster" />
     <MESSAGE value="cleandata" />
-    <option name="LAST_COMMIT_MESSAGE" value="cleandata" />
+    <MESSAGE value="make prosumer possible" />
+    <option name="LAST_COMMIT_MESSAGE" value="make prosumer possible" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -654,13 +663,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>433</line>
-          <option name="timeStamp" value="71" />
+          <line>324</line>
+          <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>340</line>
-          <option name="timeStamp" value="72" />
+          <line>156</line>
+          <option name="timeStamp" value="76" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

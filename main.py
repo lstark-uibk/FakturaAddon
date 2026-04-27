@@ -466,31 +466,31 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
                         print(f"df = {exportingdebit,exportingtransfer}")
-                        filepath1 = load_filepath(self,"Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False, defaultfilename=f"Lastschriften_Infinity_export_{datetime.date.today().strftime("%d_%m_%Y")}",homedir= self.home_directory
-                                                                                                                                                                    )
-                        if filepath1 is not None:
-                            if ".csv" not in filepath1:
-                                filepath1 = f"{filepath1}.csv"
-                            print(f"Export to: {filepath1}")
-                            try:
-                                exportingdebit.to_csv(filepath1, index=False,sep=";")
-                            except:
-                                errorbox = QMessageBox("Saving didnot work")
-                                print("savning didnot work")
-                        else: return
+                        filepath1 = load_filepath(self,"Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False, defaultfilename=f"Lastschriften_Infinity_export_{datetime.date.today().strftime("%d_%m_%Y")}",homedir= self.home_directory)
+                        if exportingdebit is not None:
+                            if filepath1 is not None:
+                                if ".csv" not in filepath1:
+                                    filepath1 = f"{filepath1}.csv"
+                                print(f"Export to: {filepath1}")
+                                try:
+                                        exportingdebit.to_csv(filepath1, index=False,sep=";")
+                                except:
+                                    errorbox = QMessageBox("Saving didnot work")
+                                    print("savning didnot work")
+                            else: return
+                        if exportingtransfer is not None:
+                            filepath2 = load_filepath(self,"Wähle Speicherort für Export für Überweisungen aus",
+                                                      filter="csv (*.csv)", fileex=False, defaultfilename=f"Überweisungen_Infinity_export_{datetime.date.today().strftime("%d_%m_%Y")}",homedir= os.path.dirname(filepath1))
 
-                        filepath2 = load_filepath(self,"Wähle Speicherort für Export für Überweisungen aus",
-                                                  filter="csv (*.csv)", fileex=False, defaultfilename=f"Überweisungen_Infinity_export_{datetime.date.today().strftime("%d_%m_%Y")}",homedir= os.path.dirname(filepath1))
-
-                        if filepath2 is not None:
-                            if ".csv" not in filepath2:
-                                filepath2 = f"{filepath2}.csv"
-                            print(f"Export to: {filepath2}")
-                            try:
-                                exportingtransfer.to_csv(filepath2, index=False,sep=";")
-                            except:
-                                errorbox = QMessageBox("Saving didnot work")
-                                print("savning didnot work")
+                            if filepath2 is not None:
+                                if ".csv" not in filepath2:
+                                    filepath2 = f"{filepath2}.csv"
+                                print(f"Export to: {filepath2}")
+                                try:
+                                        exportingtransfer.to_csv(filepath2, index=False,sep=";")
+                                except:
+                                    errorbox = QMessageBox("Saving didnot work")
+                                    print("savning didnot work")
                         else:
                             return
                         self.exportwindow.close()

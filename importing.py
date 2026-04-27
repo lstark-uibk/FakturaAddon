@@ -286,16 +286,17 @@ def load_masterdata_meta(filepath):
     for col in df.columns:
         col_values = df[col].tolist()  # remove empty cells
         col_values.append(np.nan)
-        print(col_values)
+        # print(col_values)
         for i in range(len(col_values) - 2):
             this = col_values[i]
             next = col_values[i + 1]
             nextnext = col_values[i + 2]
             if not pd.isna(col_values[i + 1]) and pd.isna(col_values[i + 2]):
                 result[this] = next
-                print(this, next)
+                # print(this, next)
             else:
-                print("no viable")
+                pass
+                # print("no viable")
 
             i += 1
     return result
@@ -355,4 +356,3 @@ invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
 energydata = Data(load_energy_data,"", F_for_metadata_loading=partial(load_energy_data,qov = True))
 newmember = Data(load_new_member_data,load_faktura_member_export_template)
-
