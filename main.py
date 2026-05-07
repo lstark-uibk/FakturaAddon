@@ -559,7 +559,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 selectmail(self,imap)
 
             self.loginprompt = LoginPrompt(try_logging_in_f,title = "Email Login")
-            # self.loginprompt.show()
+            self.loginprompt.show()
             try_logging_in_f( self.config["my_mail"], self.config["my_mail_pw"])
 
         def show_new_member():
@@ -782,11 +782,11 @@ class MainWindow(QtWidgets.QMainWindow):
         def send_invoices_mail():
             print("Send all invoices to the mailing list")
             print("Load Mail")
-            print(self.invoices.data)
+            # print(self.invoices.data)
             check,datamissing = check_whether_data_exists(invoices = self.invoices, masterdata=self.masterdata,emails= self.emails,invoicedatarequired=True, masterdatarequired= True,emailstemprequired=True)
             if check:
                 personswithinvoicesmasterdata = self.masterdata.data.loc[(self.masterdata.data["Name 1"]).isin(self.invoices.data["detailed"]["Empfänger Vorame"]) & (self.masterdata.data["Name 2"]).isin(self.invoices.data["detailed"]["Empfänger Nachname"]),:]
-                print(personswithinvoicesmasterdata)
+                # print(personswithinvoicesmasterdata)
                 personswithinvoicesmasterdata = personswithinvoicesmasterdata[["Name 1","Name 2","E-Mail"]].drop_duplicates()
 
                 def try_logging_in_f(user, pw, host):
@@ -847,7 +847,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
                         else: print("Dont send")
                     else:
-                        print("Abort since nobody was selected")
+                        print("Abort since nobody was selected")#
+
+                else:
+                    errorbox = QMessageBox()
+                    text = f"Anmeldung bei Mailserver nicht möglich mit Daten:\nMail Adresse: {self.config['my_mail']}, \nMail Passwort: {self.config['my_mail_pw']}, \nServer:{self.config['imap_server']}. \nCheck config file. "
+                    for missing in datamissing:
+                        text += f"\n- {missing}"
+                    errorbox.setText(text)
+                    errorbox.exec_()
             else:
                 errorbox = QMessageBox()
                 text = "Für diesen Schritt müssen noch folgende Daten eingelesen werden:"
