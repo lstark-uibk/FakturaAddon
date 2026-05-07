@@ -11,6 +11,9 @@ from jinja2 import Environment, FileSystemLoader, PackageLoader
 import smtplib, ssl
 import os
 import html2text
+import imaplib
+from datetime import datetime
+
 
 class MailSelection(QWidget):
     """
@@ -403,6 +406,10 @@ def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_ema
 
     # Add HTML content
     email.add_alternative(output_from_parsed_template, subtype='html')
+
+
+
+
 # .attach(MIMEText(output_from_parsed_template, "html"))
     with open(fp_to_invoice, 'rb') as content_file:
         content = content_file.read()
@@ -418,4 +425,42 @@ def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_ema
     with smtplib.SMTP(host,port,) as s:
         s.login(sender_email, password)
         s.send_message(email,sender_email,receiver_email)
+
+    def ensure_folder(imap, folder_name: str):
+        # Get all folders
+        imap.subscribe("INBOX.Gesendete_Rechnungen")
+
+        status, folders = imap.list()
+
+        folders_decoded = [
+            f.decode() if isinstance(f, bytes) else f
+            for f in folders
+        ]
+
+        # Check if folder exists
+        if not any(folder_name in f for f in folders_decoded):
+            print(f"Folder '{folder_name}' not found. Creating it...")
+            imap.create(folder_name)
+            imap.subscribe("INBOX.Gesendete_Rechnungen")
+
+        else:
+            print(f"Folder '{folder_name}' exists.")
+
+        return folder_name
+
+    # SAVE TO SENT FOLDER
+    with imaplib.IMAP4_SSL(host, 993) as imap:
+        imap.login(sender_email, password)
+        folder = ensure_folder(imap, "INBOX.Gesendete_Rechnungen")
+        # show folders
+        print(imap.list())
+
+        result = imap.append(
+            folder,
+            "\\Seen",
+            imaplib.Time2Internaldate(datetime.now().timestamp()),
+            email.as_bytes()
+        )
+
+        print("Stored in:", folder)
     print("... Done")
