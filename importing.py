@@ -681,14 +681,14 @@ class SettingsDialog(QDialog):
         dir_row.addWidget(browse_btn)
 
         # Template fields with browse buttons
-        self.edit_template_invoice = QLineEdit("templates/template_invoice_clean.docx")
+        self.edit_template_invoice = QLineEdit("template_invoice_clean.docx")
         invoice_row = QHBoxLayout()
         invoice_browse = QPushButton("Browse…")
         invoice_browse.clicked.connect(lambda: self._browse_file(self.edit_template_invoice, "Word Documents (*.docx)"))
         invoice_row.addWidget(self.edit_template_invoice)
         invoice_row.addWidget(invoice_browse)
 
-        self.edit_template_email = QLineEdit("templates/email_template_clean.html")
+        self.edit_template_email = QLineEdit("email_template_clean.html")
         email_row = QHBoxLayout()
         email_browse = QPushButton("Browse…")
         email_browse.clicked.connect(lambda: self._browse_file(self.edit_template_email, "HTML Files (*.html)"))

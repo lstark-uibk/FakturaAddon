@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix dependencies">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix filepaths templates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
     </list>
@@ -688,7 +688,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779046737633</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="fix filepaths templates">
+      <option name="closed" value="true" />
+      <created>1779050042364</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1779050042364</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -718,7 +726,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Make Login Prompt more universal" />
     <MESSAGE value="New member checkin somehow (buggy?) finished" />
     <MESSAGE value="produc invoices finished. before makeing 3 plots" />
     <MESSAGE value="changing for mandates to be in eegfaktura database" />
@@ -743,7 +750,8 @@
     <MESSAGE value="permission to write" />
     <MESSAGE value="build for linux" />
     <MESSAGE value="fix dependencies" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix dependencies" />
+    <MESSAGE value="fix filepaths templates" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix filepaths templates" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
