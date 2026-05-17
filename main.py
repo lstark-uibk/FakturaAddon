@@ -506,7 +506,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
                         print(f"df = {exportingdebit,exportingtransfer}")
-                        filepath1 = load_filepath(self,"Wähle Speicherort für Export für SEPA Lastschrift aus", filter="csv (*.csv)", fileex=False, defaultfilename=f"Lastschriften_Infinity_export_{datetime.date.today().strftime("%d_%m_%Y")}",homedir= self.home_directory)
+                        date_str = datetime.date.today().strftime("%d_%m_%Y")
+                        filepath1 = load_filepath(self, "Wähle Speicherort für Export für SEPA Lastschrift aus",
+                                                  filter="csv (*.csv)", fileex=False,
+                                                  defaultfilename=f"Lastschriften_Infinity_export_{date_str}",
+                                                  homedir=self.home_directory)
+
                         if exportingdebit is not None:
                             if filepath1 is not None:
                                 if ".csv" not in filepath1:
