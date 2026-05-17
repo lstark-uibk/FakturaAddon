@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Login field without functionalityy">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="settings window">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cleandata/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/cleandata/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -622,7 +619,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779032271031</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="settings window">
+      <option name="closed" value="true" />
+      <created>1779040338154</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1779040338154</updated>
+    </task>
+    <task id="LOCAL-00035" summary="settings window">
+      <option name="closed" value="true" />
+      <created>1779041450720</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1779041450720</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -652,7 +665,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Export is working now" />
     <MESSAGE value="import mandates from nc working" />
     <MESSAGE value="showing filepaths fixed" />
     <MESSAGE value="Login screen for nextcloud" />
@@ -677,24 +689,25 @@
     <MESSAGE value="error message when email anmeldung nicht möglich" />
     <MESSAGE value="sving to sent folder" />
     <MESSAGE value="Login field without functionalityy" />
-    <option name="LAST_COMMIT_MESSAGE" value="Login field without functionalityy" />
+    <MESSAGE value="settings window" />
+    <option name="LAST_COMMIT_MESSAGE" value="settings window" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importing.py</url>
-          <line>228</line>
+          <line>216</line>
           <option name="timeStamp" value="70" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>324</line>
+          <line>311</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>156</line>
+          <line>143</line>
           <option name="timeStamp" value="76" />
         </line-breakpoint>
       </breakpoints>
@@ -703,7 +716,7 @@
       <configuration name="PythonConfigurationType">
         <watch expression="if not self.invoices.data: print(&quot;yea&quot;)" language="Python" />
       </configuration>
-      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="380">
+      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="378">
         <watch expression="password" language="Python" />
       </inline-watch>
     </watches-manager>
