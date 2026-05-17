@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="github actions">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="newer python">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -645,7 +644,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779042051155</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="&quot;fix line 509">
+      <option name="closed" value="true" />
+      <created>1779043207779</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1779043207779</updated>
+    </task>
+    <task id="LOCAL-00038" summary="newer python">
+      <option name="closed" value="true" />
+      <created>1779043411448</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1779043411448</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -675,8 +690,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="showing filepaths fixed" />
-    <MESSAGE value="Login screen for nextcloud" />
     <MESSAGE value="Firmenlastschrift possible" />
     <MESSAGE value="export selection personen prettier" />
     <MESSAGE value="debit and transfer merging for easier calculation" />
@@ -700,7 +713,9 @@
     <MESSAGE value="Login field without functionalityy" />
     <MESSAGE value="settings window" />
     <MESSAGE value="github actions" />
-    <option name="LAST_COMMIT_MESSAGE" value="github actions" />
+    <MESSAGE value="&quot;fix line 509" />
+    <MESSAGE value="newer python" />
+    <option name="LAST_COMMIT_MESSAGE" value="newer python" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
