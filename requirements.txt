@@ -7,3 +7,4 @@ docxtpl
 jinja2
 openpyxl
 matplotlib
+docx2pdf

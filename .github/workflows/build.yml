@@ -31,7 +31,6 @@ jobs:
         run: >
           pyinstaller
           --onedir
-          --windowed
           --name "EEGApp"
           --add-data "templates/email_template_clean.html;templates"
           --add-data "templates/template_invoice_clean.docx;templates"

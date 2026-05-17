@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="newer python">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="build for linux">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -288,6 +290,9 @@
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -660,7 +665,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779043411448</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="permission to write">
+      <option name="closed" value="true" />
+      <created>1779043713337</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1779043713337</updated>
+    </task>
+    <task id="LOCAL-00040" summary="build for linux">
+      <option name="closed" value="true" />
+      <created>1779044905664</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1779044905664</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -690,8 +711,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Firmenlastschrift possible" />
-    <MESSAGE value="export selection personen prettier" />
     <MESSAGE value="debit and transfer merging for easier calculation" />
     <MESSAGE value="Make Login Prompt more universal" />
     <MESSAGE value="New member checkin somehow (buggy?) finished" />
@@ -715,7 +734,9 @@
     <MESSAGE value="github actions" />
     <MESSAGE value="&quot;fix line 509" />
     <MESSAGE value="newer python" />
-    <option name="LAST_COMMIT_MESSAGE" value="newer python" />
+    <MESSAGE value="permission to write" />
+    <MESSAGE value="build for linux" />
+    <option name="LAST_COMMIT_MESSAGE" value="build for linux" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
