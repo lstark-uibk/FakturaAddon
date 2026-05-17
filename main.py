@@ -4,13 +4,14 @@ import numpy as np
 import json
 from functools import partial
 import pandas as pd
+from pathlib import Path
 import os
 from subwindows import  Subwindow
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QGridLayout, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout, QDialog
-from importing import invoices,emails, masterdata,energydata,load_filepath, check_whether_data_exists, newmember, LoginDialog
+from importing import invoices,emails, masterdata,energydata,load_filepath, check_whether_data_exists, newmember, LoginDialog, SettingsDialog
 from exporting import produce_sepa_export_dfs, produce_invoices_and_save
 from PyQt5.QtWidgets import QHBoxLayout
 import datetime as dt
@@ -99,8 +100,47 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(20, 20)
         self.second_window = None
         self.exportwindow = None
-        with open("cleandata/config.json", 'r') as file:
-            self.config = json.load(file)
+
+        ENV_PATH = Path(__file__).parent / ".env"
+
+        _ENV_KEYS = {
+            "user": "EEG_USER",
+            "password": "EEG_PASSWORD",
+            "tenant": "EEG_TENANT",
+            "community_id": "EEG_COMMUNITY_ID",
+            "my_mail": "MAIL_ADDRESS",
+            "imap_server": "MAIL_IMAP_SERVER",
+            "my_mail_pw": "MAIL_PASSWORD",
+            "home_directory": "HOME_DIRECTORY",
+            "EEG_name": "EEG_NAME",
+            "template_export_invoice" : "TEMPLATE_EXPORT_INVOICE",
+            "template_email" : "TEMPLATE_EMAIL"
+        }
+
+        def load_env() -> dict:
+            values = {}
+            if not ENV_PATH.exists():
+                return values
+            for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                for field, env_key in _ENV_KEYS.items():
+                    if key.strip() == env_key:
+                        values[field] = val.strip()
+            return values
+
+        self.config = load_env()
+        print(f"Conf: {self.config}")
+        if not self.config:
+            print("No config .env file, lets create one")
+            dlg = SettingsDialog()
+            if dlg.exec_() == QDialog.Accepted:
+                pass
+
+        # with open("cleandata/config.json", 'r') as file:
+        #     self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]
         paths_datanames = ["Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","EEG Faktura Quartalsenergiedaten QOV","Rechnungen Vorlage", "Emails Vorlage"]
@@ -603,7 +643,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         ws[matchingdict[match]] = self.new_member.data[match]
                     except:
                         print(f"{match} is missing")
-                        valuesmissing.append(match)
+                        valuesmissing.append(match = template_invoice_clean.docx)
                 if valuesmissing:
                     errorbox = QMessageBox()
                     text = "Diese Werte fehlen:"
@@ -611,7 +651,14 @@ class MainWindow(QtWidgets.QMainWindow):
                         text += f"\n- {missing}"
                 errorbox.setText(text)
                 errorbox.exec_()
-                if self.new_member.data["Anmeldungstyp"] == "Produzent:in":
+                if self.new_meif __name__ == "__main__":
+    app = QApplication(sys.argv)
+    dlg = SettingsDialog()
+    if dlg.exec_() == QDialog.Accepted:
+        print("Settings saved:", dlg.get_settings())
+    else:
+        print("Cancelled.")
+    sys.exit(0)mber.data["Anmeldungstyp"] == "Produzent:in":
                     ws["L10"] = self.new_member.data['Einspeisezählpunkt-nummer']
                     ws["M10"] = "PRODUCTION"    #????
                     netzbetreibernummer = self.new_member.data['Einspeisezählpunkt-nummer'][0:8]
@@ -649,8 +696,13 @@ class MainWindow(QtWidgets.QMainWindow):
             dlg = LoginDialog(parent=self)  # pass your main window as parent
             if dlg.exec_() == QDialog.Accepted:
                 creds = dlg.get_credentials()
+                print(creds)
                 # creds["user"], creds["login"], creds["tenant"], creds["password"]
-
+        def change_Settings():
+            dlg = SettingsDialog()
+            if dlg.exec_() == QDialog.Accepted:
+                creds = dlg.get_credentials()
+                print(creds)
 
         def check_energydata():
             print("I check the energydata")
@@ -846,10 +898,6 @@ class MainWindow(QtWidgets.QMainWindow):
                                 fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
                                 send_mail_to_one_person(self.config["my_mail"],self.config["my_mail_pw"], self.config["imap_server"],self.config["EEG_name"],email_this,person_data["Name 1"],
                                                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile, masterdata)
-                                # send_mail_to_one_person(self.my_mail,self.my_mail_pw,"leander.stark@a1.net",person_data["Name 1"],
-                                #                         self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile)
-
-
 
 
                         else: print("Dont send")
@@ -873,14 +921,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 # for
                 #     # MailAdressSelection(self.emails, "An welche Mailadressen soll ich die Rechnungen schicken")
-
-
-
-
-
-
-
-        menubardata = [["Login in EEG Faktura","",login_eeg_faktura],["Überprüfe die Energiedatenqualität","",check_energydata],["Erstelle alle Rechnungen", "", create_invoices_and_save],["Verschicke die Rechnungen per Mail", "", send_invoices_mail]]
+        # when we have api capabilities we can use this
+        # ["Login in EEG Faktura", "", login_eeg_faktura],
+        menubardata = [["Überprüfe die Energiedatenqualität","",check_energydata],["Erstelle alle Rechnungen", "", create_invoices_and_save],["Verschicke die Rechnungen per Mail", "", send_invoices_mail],["Settings", "", change_Settings]]
         return menubardata
 
 

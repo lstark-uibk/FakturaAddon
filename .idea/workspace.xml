@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Make plotting for more than 4 ZP possible">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Login field without functionalityy">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cleandata/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/cleandata/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,48 +52,49 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.NPV_calculation.executor": "Run",
-    "Python.QTableWidgetItem.executor": "Run",
-    "Python.Unnamed.executor": "Run",
-    "Python.emailing.executor": "Run",
-    "Python.exporting.executor": "Run",
-    "Python.importing.executor": "Run",
-    "Python.imports.executor": "Run",
-    "Python.main.executor": "Debug",
-    "Python.make_import_file.executor": "Run",
-    "Python.plotting_energydata.executor": "Run",
-    "Python.plotting_energydata_24_q3.executor": "Run",
-    "Python.subwindows.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.test_exporting.executor": "Run",
-    "Python.tests.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "git-widget-placeholder": "main-public",
-    "last_opened_file_path": "/home/leander/gei/faktura/pythonProject/cleandata",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "python.debugger.dataview.autoresize": "false",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "settings.editor.splitter.proportion": "0.23289071",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.NPV_calculation.executor&quot;: &quot;Run&quot;,
+    &quot;Python.QTableWidgetItem.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Unnamed.executor&quot;: &quot;Run&quot;,
+    &quot;Python.emailing.executor&quot;: &quot;Run&quot;,
+    &quot;Python.exporting.executor&quot;: &quot;Run&quot;,
+    &quot;Python.importing.executor&quot;: &quot;Run&quot;,
+    &quot;Python.imports.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.make_import_file.executor&quot;: &quot;Run&quot;,
+    &quot;Python.plotting_energydata.executor&quot;: &quot;Run&quot;,
+    &quot;Python.plotting_energydata_24_q3.executor&quot;: &quot;Run&quot;,
+    &quot;Python.subwindows.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_exporting.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tests.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main-public&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/leander/gei/Digitale Infrastruktur/EEGFaktura/FakturaAddon_develop/pythonProject/.venv&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;python.debugger.dataview.autoresize&quot;: &quot;false&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;settings.editor.splitter.proportion&quot;: &quot;0.23289071&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/.venv" />
       <recent name="$PROJECT_DIR$/cleandata" />
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/cleandata" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/cleandata" />
     </key>
   </component>
   <component name="RunManager" selected="Python.main">
@@ -234,8 +237,11 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="plotting" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
+      <selectedOptions>
+        <option name="envPaths" visible="false" />
+      </selectedOptions>
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -247,9 +253,9 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plotting.py" />
       <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
@@ -284,9 +290,6 @@
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -320,7 +323,7 @@
       <item itemvalue="Python.aregister_nc_py_api (28)" />
       <item itemvalue="Python.register_nc_py_api (last)" />
       <item itemvalue="Python.aregister_nc_py_api (last)" />
-      <item itemvalue="Python.test" />
+      <item itemvalue="Python.plotting" />
       <item itemvalue="Python.emailing" />
       <item itemvalue="Python.exporting" />
       <item itemvalue="Python.main" />
@@ -329,9 +332,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.exporting" />
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.tests" />
+        <item itemvalue="Python.plotting" />
+        <item itemvalue="Python.exporting" />
         <item itemvalue="Python.emailing" />
       </list>
     </recent_temporary>
@@ -595,7 +598,31 @@
       <option name="project" value="LOCAL" />
       <updated>1777285910300</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="error message when email anmeldung nicht möglich">
+      <option name="closed" value="true" />
+      <created>1778171403564</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1778171403564</updated>
+    </task>
+    <task id="LOCAL-00032" summary="sving to sent folder">
+      <option name="closed" value="true" />
+      <created>1778173428508</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1778173428508</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Login field without functionalityy">
+      <option name="closed" value="true" />
+      <created>1779032271031</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1779032271031</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -625,9 +652,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="sepa export loading files" />
-    <MESSAGE value="sepa export almost working" />
-    <MESSAGE value="Big changes in program setup (no selection window, all shifted to menubar)" />
     <MESSAGE value="Export is working now" />
     <MESSAGE value="import mandates from nc working" />
     <MESSAGE value="showing filepaths fixed" />
@@ -650,24 +674,17 @@
     <MESSAGE value="cleandata" />
     <MESSAGE value="make prosumer possible" />
     <MESSAGE value="Make plotting for more than 4 ZP possible" />
-    <option name="LAST_COMMIT_MESSAGE" value="Make plotting for more than 4 ZP possible" />
+    <MESSAGE value="error message when email anmeldung nicht möglich" />
+    <MESSAGE value="sving to sent folder" />
+    <MESSAGE value="Login field without functionalityy" />
+    <option name="LAST_COMMIT_MESSAGE" value="Login field without functionalityy" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/emailing.py</url>
-          <line>383</line>
-          <option name="timeStamp" value="66" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/emailing.py</url>
-          <line>400</line>
-          <option name="timeStamp" value="67" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/importing.py</url>
-          <line>221</line>
+          <line>228</line>
           <option name="timeStamp" value="70" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -680,23 +697,13 @@
           <line>156</line>
           <option name="timeStamp" value="76" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>804</line>
-          <option name="timeStamp" value="78" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>791</line>
-          <option name="timeStamp" value="79" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
         <watch expression="if not self.invoices.data: print(&quot;yea&quot;)" language="Python" />
       </configuration>
-      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="377">
+      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="380">
         <watch expression="password" language="Python" />
       </inline-watch>
     </watches-manager>

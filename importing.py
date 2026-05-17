@@ -16,11 +16,9 @@ from PyQt5.QtWidgets import (
     QApplication, QDialog, QFormLayout, QLineEdit,
     QPushButton, QDialogButtonBox, QLabel, QVBoxLayout
 )
+import requests
 
 
-
-# mandate =pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
-# df = pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
 class Data():
     def __init__(self,F_for_data_loading,F_for_template_loading, F_for_metadata_loading = lambda x: x):
         self.f_load_data = F_for_data_loading
@@ -364,18 +362,109 @@ energydata = Data(load_energy_data,"", F_for_metadata_loading=partial(load_energ
 newmember = Data(load_new_member_data,load_faktura_member_export_template)
 
 
+import sys
+import os
+import requests
+from pathlib import Path
+from PyQt5.QtWidgets import (
+    QApplication, QDialog, QFormLayout, QLineEdit,
+    QPushButton, QDialogButtonBox, QLabel, QVBoxLayout
+)
+
+BASE_URL = "https://eegfaktura.at/energystore/query"
+ENV_PATH = Path(__file__).parent / ".env"
+
+# Mapping: internal field name → .env key
+_ENV_KEYS = {
+    "user":         "EEG_USER",
+    "password":     "EEG_PASSWORD",
+    "tenant":       "EEG_TENANT",
+    "community_id": "EEG_COMMUNITY_ID",
+}
+
+
+def load_env() -> dict:
+    """Read KEY=VALUE pairs from .env and return a dict with our credential fields."""
+    values = {}
+    if not ENV_PATH.exists():
+        return values
+    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        for field, env_key in _ENV_KEYS.items():
+            if key.strip() == env_key:
+                values[field] = val.strip()
+    return values
+
+
+def save_env(creds: dict) -> None:
+    """Write credentials back to .env, preserving any unrelated lines."""
+    to_write = {_ENV_KEYS[k]: v for k, v in creds.items() if k in _ENV_KEYS}
+
+    existing_lines = []
+    if ENV_PATH.exists():
+        existing_lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
+
+    updated = set()
+    new_lines = []
+    for line in existing_lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.partition("=")[0].strip()
+            if key in to_write:
+                new_lines.append(f"{key}={to_write[key]}")
+                updated.add(key)
+                continue
+        new_lines.append(line)
+
+    # Append any keys not yet present in the file
+    for env_key, val in to_write.items():
+        if env_key not in updated:
+            new_lines.append(f"{env_key}={val}")
+
+    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
+def fetch_community_metadata(community_id: str, tenant: str, user: str, password: str) -> dict:
+    """POST to the community metadata endpoint and return the parsed JSON body.
+
+    Raises:
+        requests.HTTPError        – non-2xx response (bad credentials / wrong community ID)
+        requests.RequestException – network-level errors (timeout, DNS, …)
+    """
+    import base64
+    url = f"{BASE_URL}/{community_id}/metadata"
+    credentials = base64.b64encode(f"{user}:{password}".encode()).decode()
+    headers = {
+        "Content-Type":  "application/json",
+        "Authorization": f"Basic {credentials}",
+        "X-Tenant":      tenant,
+    }
+    body = {}
+    print("--- REQUEST ---")
+    print(f"POST {url}")
+    print(f"Headers: Content-Type={headers['Content-Type']}, X-Tenant={headers['X-Tenant']}, Authorization=Basic <redacted>")
+    print(f"Body:    {body}")
+    print("---------------")
+    resp = requests.post(url, headers=headers, json=body, timeout=10)
+    resp.raise_for_status()
+    return resp.json()
+
+
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Sign In")
-        self.setFixedWidth(600)
+        self.setFixedWidth(700)
 
         layout = QVBoxLayout(self)
 
         form = QFormLayout()
-        self.edit_user     = QLineEdit()
-        self.edit_password    = QLineEdit()
-        self.edit_tenant   = QLineEdit()
+        self.edit_user         = QLineEdit()
+        self.edit_password     = QLineEdit()
+        self.edit_tenant       = QLineEdit()
         self.edit_community_id = QLineEdit()
         self.edit_password.setEchoMode(QLineEdit.Password)
 
@@ -385,44 +474,300 @@ class LoginDialog(QDialog):
         form.addRow("Community ID:", self.edit_community_id)
         layout.addLayout(form)
 
+        for field in (self.edit_user, self.edit_password,
+                      self.edit_tenant, self.edit_community_id):
+            field.returnPressed.connect(self._on_accept)
+
         self.error_label = QLabel()
         self.error_label.setVisible(False)
         layout.addWidget(self.error_label)
-
-        for field in (self.edit_user, self.edit_password, self.edit_tenant, self.edit_community_id):
-            field.returnPressed.connect(self._on_accept)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+        # Pre-fill fields from .env if values exist
+        saved = load_env()
+        self.edit_user.setText(saved.get("user", ""))
+        self.edit_password.setText(saved.get("password", ""))
+        self.edit_tenant.setText(saved.get("tenant", ""))
+        self.edit_community_id.setText(saved.get("community_id", ""))
+
     def _on_accept(self):
         if not all([
             self.edit_user.text().strip(),
-            self.edit_password.text().strip(),
+            self.edit_password.text(),
             self.edit_tenant.text().strip(),
-            self.edit_community_id.text(),
+            self.edit_community_id.text().strip(),
         ]):
             self.error_label.setText("All fields are required.")
             self.error_label.setVisible(True)
             return
         self.error_label.setVisible(False)
+
+        creds = self.get_credentials()
+        try:
+
+            self._metadata = fetch_community_metadata(
+                community_id=creds["community_id"],
+                tenant=creds["tenant"],
+                user=creds["user"],
+                password=creds["password"],
+            )
+
+        except requests.HTTPError as exc:
+            self.error_label.setText(
+                f"HTTP {exc.response.status_code} — check your credentials or community ID"
+            )
+            self.error_label.setVisible(True)
+            return
+        except requests.RequestException as exc:
+            self.error_label.setText(f"Network error: {exc}")
+            self.error_label.setVisible(True)
+            return
+
+        save_env(creds)
         self.accept()
 
-    def get_credentials(self):
-        logcred = {
-            "user":     self.edit_user.text().strip(),
-            "login":    self.edit_password.text().strip(),
-            "tenant":   self.edit_tenant.text().strip(),
-            "password": self.edit_community_id.text(),
-        }
-        print(f"Try logging in with {logcred}")
+    def get_credentials(self) -> dict:
         return {
-            "user":     self.edit_user.text().strip(),
-            "login":    self.edit_password.text().strip(),
-            "tenant":   self.edit_tenant.text().strip(),
-            "password": self.edit_community_id.text(),
+            "user":         self.edit_user.text().strip(),
+            "password":     self.edit_password.text(),
+            "tenant":       self.edit_tenant.text().strip(),
+            "community_id": self.edit_community_id.text().strip(),
         }
+
+    def get_metadata(self) -> dict:
+        """Returns the metadata response from the server (only valid after accept())."""
+        return getattr(self, "_metadata", {})
+
+#
+import sys
+import requests
+from pathlib import Path
+from PyQt5.QtWidgets import (
+    QApplication, QDialog, QFormLayout, QLineEdit,
+    QDialogButtonBox, QLabel, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout
+)
+
+ENV_PATH = Path(__file__).parent / ".env"
+
+_ENV_KEYS = {
+    "my_mail":        "MAIL_ADDRESS",
+    "imap_server":    "MAIL_IMAP_SERVER",
+    "my_mail_pw":     "MAIL_PASSWORD",
+    "home_directory": "HOME_DIRECTORY",
+    "EEG_name":       "EEG_NAME",
+}
+
+
+def load_env() -> dict:
+    values = {}
+    if not ENV_PATH.exists():
+        return values
+    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        for field, env_key in _ENV_KEYS.items():
+            if key.strip() == env_key:
+                values[field] = val.strip()
+    return values
+
+
+def save_env(settings: dict) -> None:
+    to_write = {_ENV_KEYS[k]: v for k, v in settings.items() if k in _ENV_KEYS}
+
+    existing_lines = []
+    if ENV_PATH.exists():
+        existing_lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
+
+    updated = set()
+    new_lines = []
+    for line in existing_lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.partition("=")[0].strip()
+            if key in to_write:
+                new_lines.append(f"{key}={to_write[key]}")
+                updated.add(key)
+                continue
+        new_lines.append(line)
+
+    for env_key, val in to_write.items():
+        if env_key not in updated:
+            new_lines.append(f"{env_key}={val}")
+
+    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
+import sys
+import requests
+from pathlib import Path
+from PyQt5.QtWidgets import (
+    QApplication, QDialog, QFormLayout, QLineEdit,
+    QDialogButtonBox, QLabel, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout
+)
+
+ENV_PATH = Path(__file__).parent / ".env"
+
+_ENV_KEYS = {
+    "my_mail":                  "MAIL_ADDRESS",
+    "imap_server":              "MAIL_IMAP_SERVER",
+    "my_mail_pw":               "MAIL_PASSWORD",
+    "home_directory":           "HOME_DIRECTORY",
+    "EEG_name":                 "EEG_NAME",
+    "template_export_invoice":  "TEMPLATE_EXPORT_INVOICE",
+    "template_email":           "TEMPLATE_EMAIL",
+}
+
+
+def load_env() -> dict:
+    values = {}
+    if not ENV_PATH.exists():
+        return values
+    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        for field, env_key in _ENV_KEYS.items():
+            if key.strip() == env_key:
+                values[field] = val.strip()
+    return values
+
+
+def save_env(settings: dict) -> None:
+    to_write = {_ENV_KEYS[k]: v for k, v in settings.items() if k in _ENV_KEYS}
+
+    existing_lines = []
+    if ENV_PATH.exists():
+        existing_lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
+
+    updated = set()
+    new_lines = []
+    for line in existing_lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.partition("=")[0].strip()
+            if key in to_write:
+                new_lines.append(f"{key}={to_write[key]}")
+                updated.add(key)
+                continue
+        new_lines.append(line)
+
+    for env_key, val in to_write.items():
+        if env_key not in updated:
+            new_lines.append(f"{env_key}={val}")
+
+    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
+class SettingsDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.setFixedWidth(700)
+
+        layout = QVBoxLayout(self)
+
+        form = QFormLayout()
+
+        self.edit_my_mail     = QLineEdit()
+        self.edit_imap_server = QLineEdit()
+        self.edit_my_mail_pw  = QLineEdit()
+        self.edit_my_mail_pw.setEchoMode(QLineEdit.Password)
+        self.edit_eeg_name    = QLineEdit()
+
+        # Home directory with browse button
+        dir_row = QHBoxLayout()
+        self.edit_home_directory = QLineEdit()
+        browse_btn = QPushButton("Browse…")
+        browse_btn.clicked.connect(self._browse_directory)
+        dir_row.addWidget(self.edit_home_directory)
+        dir_row.addWidget(browse_btn)
+
+        # Template fields with browse buttons
+        self.edit_template_invoice = QLineEdit("template_invoice_clean.docx")
+        invoice_row = QHBoxLayout()
+        invoice_browse = QPushButton("Browse…")
+        invoice_browse.clicked.connect(lambda: self._browse_file(self.edit_template_invoice, "Word Documents (*.docx)"))
+        invoice_row.addWidget(self.edit_template_invoice)
+        invoice_row.addWidget(invoice_browse)
+
+        self.edit_template_email = QLineEdit("email_template.html")
+        email_row = QHBoxLayout()
+        email_browse = QPushButton("Browse…")
+        email_browse.clicked.connect(lambda: self._browse_file(self.edit_template_email, "HTML Files (*.html)"))
+        email_row.addWidget(self.edit_template_email)
+        email_row.addWidget(email_browse)
+
+        form.addRow("Mail address:", self.edit_my_mail)
+        form.addRow("IMAP server:", self.edit_imap_server)
+        form.addRow("Mail password:", self.edit_my_mail_pw)
+        form.addRow("Home directory:", dir_row)
+        form.addRow("EEG name:", self.edit_eeg_name)
+        form.addRow("Invoice template:", invoice_row)
+        form.addRow("Email template:", email_row)
+        layout.addLayout(form)
+
+        note = QLabel("All fields are optional.")
+        layout.addWidget(note)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self._on_save)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        for field in (self.edit_my_mail, self.edit_imap_server,
+                      self.edit_my_mail_pw, self.edit_home_directory,
+                      self.edit_eeg_name, self.edit_template_invoice,
+                      self.edit_template_email):
+            field.returnPressed.connect(self._on_save)
+
+        # Pre-fill from .env
+        saved = load_env()
+        self.edit_my_mail.setText(saved.get("my_mail", ""))
+        self.edit_imap_server.setText(saved.get("imap_server", ""))
+        self.edit_my_mail_pw.setText(saved.get("my_mail_pw", ""))
+        self.edit_home_directory.setText(saved.get("home_directory", ""))
+        self.edit_eeg_name.setText(saved.get("EEG_name", ""))
+        if saved.get("template_export_invoice"):
+            self.edit_template_invoice.setText(saved["template_export_invoice"])
+        if saved.get("template_email"):
+            self.edit_template_email.setText(saved["template_email"])
+
+    def _browse_directory(self):
+        path = QFileDialog.getExistingDirectory(self, "Select home directory",
+                                                self.edit_home_directory.text() or str(Path.home()))
+        if path:
+            self.edit_home_directory.setText(path)
+
+    def _browse_file(self, edit: QLineEdit, file_filter: str):
+        path, _ = QFileDialog.getOpenFileName(self, "Select file",
+                                              self.edit_home_directory.text() or str(Path.home()),
+                                              file_filter)
+        if path:
+            edit.setText(path)
+
+    def _on_save(self):
+        settings = self.get_settings()
+        save_env(settings)
+        self.accept()
+
+    def get_settings(self) -> dict:
+        return {
+            "my_mail":                  self.edit_my_mail.text().strip(),
+            "imap_server":              self.edit_imap_server.text().strip(),
+            "my_mail_pw":               self.edit_my_mail_pw.text(),
+            "home_directory":           self.edit_home_directory.text().strip(),
+            "EEG_name":                 self.edit_eeg_name.text().strip(),
+            "template_export_invoice":  self.edit_template_invoice.text().strip(),
+            "template_email":           self.edit_template_email.text().strip(),
+        }
+
+
 
 
