@@ -4,12 +4,14 @@ on:
   push:
     tags:
       - "v*"          # triggers on tags like v1.0.0, v1.2.3
+      - "linux-v*"    # triggers on tags like linux-v1.0.0
 
 jobs:
-  build:
+  build-windows:
+    if: startsWith(github.ref_name, 'v') && !startsWith(github.ref_name, 'linux-')
     runs-on: windows-latest
     permissions:
-      contents: write  # ← required to create GitHub releases
+      contents: write
 
     steps:
       - name: Checkout code
@@ -49,5 +51,52 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/EEGApp-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    if: startsWith(github.ref_name, 'linux-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build binary
+        run: >
+          pyinstaller
+          --onedir
+          --windowed
+          --name "EEGApp"
+          --add-data "templates/email_template_clean.html:templates"
+          --add-data "templates/template_invoice_clean.docx:templates"
+          main.py
+
+      - name: Copy templates next to binary
+        run: |
+          cp templates/email_template_clean.html dist/EEGApp/
+          cp templates/template_invoice_clean.docx dist/EEGApp/
+
+      - name: Zip release folder
+        run: |
+          cd dist
+          zip -r EEGApp-linux.zip EEGApp
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/EEGApp-linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
