@@ -1,5 +1,3 @@
-import time
-from tempfile import template
 import numpy as np
 from functools import partial
 from docxtpl import DocxTemplate
@@ -8,15 +6,8 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QWidget, QVBoxLayout, QPus
 from PyQt5.QtCore import pyqtSignal, QThread, Qt
 from io import BytesIO
 from jinja2 import Environment, FileSystemLoader, PackageLoader, select_autoescape
-import os
-from numpy.testing.print_coercion_tables import print_new_cast_table
 from openpyxl import load_workbook
-import sys
-from PyQt5.QtWidgets import (
-    QApplication, QDialog, QFormLayout, QLineEdit,
-    QPushButton, QDialogButtonBox, QLabel, QVBoxLayout
-)
-import requests
+
 
 
 class Data():

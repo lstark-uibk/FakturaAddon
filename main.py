@@ -139,7 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if dlg.exec_() == QDialog.Accepted:
                 pass
 
-        # with open("cleandata/config.json", 'r') as file:
+        # with open("templates/config.json", 'r') as file:
         #     self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]

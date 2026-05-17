@@ -1,20 +1,7 @@
-from cProfile import label
-from pathlib import Path
 import os
 import pandas as pd
 import datetime as dt
 from docx2pdf import convert
-# from docxtpl import DocxTemplate
-# import openpyxl
-# from docx.enum.table import WD_TABLE_ALIGNMENT
-# from docx import Document
-# from docx.shared import Cm
-# import numpy as np
-# from datetime import date
-# import datetime as dt
-# from PyInquirer import prompt
-# import pprint
-# import tkinter as tk
 import numpy as np
 import subprocess
 import matplotlib.pyplot as plt

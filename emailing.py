@@ -7,10 +7,8 @@ from email.mime.multipart import MIMEMultipart
 from email.message import EmailMessage
 from smtplib import SMTP
 import numpy as np
-from jinja2 import Environment, FileSystemLoader, PackageLoader
 import smtplib, ssl
 import os
-import html2text
 import imaplib
 from datetime import datetime
 

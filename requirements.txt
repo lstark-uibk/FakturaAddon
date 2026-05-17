@@ -1,0 +1,9 @@
+PyQt5
+requests
+numpy
+pandas
+beautifulsoup4
+docxtpl
+jinja2
+openpyxl
+matplotlib

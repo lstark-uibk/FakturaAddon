@@ -1,0 +1,53 @@
+name: Build Windows EXE
+
+on:
+  push:
+    tags:
+      - "v*"          # triggers on tags like v1.0.0, v1.2.3
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: production
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE
+        run: >
+          pyinstaller
+          --onedir
+          --windowed
+          --name "EEGApp"
+          --add-data "templates/email_template_clean.html;templates"
+          --add-data "templates/template_invoice_clean.docx;templates"
+          main.py
+
+      - name: Copy templates next to EXE
+        run: |
+          copy templates\email_template_clean.html dist\EEGApp\
+          copy templates\template_invoice_clean.docx dist\EEGApp\
+
+      - name: Zip release folder
+        run: |
+          cd dist
+          Compress-Archive -Path EEGApp -DestinationPath EEGApp-windows.zip
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/EEGApp-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
