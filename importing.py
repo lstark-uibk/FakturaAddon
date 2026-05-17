@@ -11,6 +11,12 @@ from jinja2 import Environment, FileSystemLoader, PackageLoader, select_autoesca
 import os
 from numpy.testing.print_coercion_tables import print_new_cast_table
 from openpyxl import load_workbook
+import sys
+from PyQt5.QtWidgets import (
+    QApplication, QDialog, QFormLayout, QLineEdit,
+    QPushButton, QDialogButtonBox, QLabel, QVBoxLayout
+)
+
 
 
 # mandate =pd.read_excel("/home/leander/gei/faktura/abrechnung_24_q3/CC100438_abrechnung_Abr_YQ-2024-3_export(1).xlsx",sheet_name="Liste")
@@ -356,3 +362,67 @@ invoices = Data(load_invoices,load_invoice_template)
 emails = Data(load_mail_adresses,load_mail_template)
 energydata = Data(load_energy_data,"", F_for_metadata_loading=partial(load_energy_data,qov = True))
 newmember = Data(load_new_member_data,load_faktura_member_export_template)
+
+
+class LoginDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Sign In")
+        self.setFixedWidth(600)
+
+        layout = QVBoxLayout(self)
+
+        form = QFormLayout()
+        self.edit_user     = QLineEdit()
+        self.edit_password    = QLineEdit()
+        self.edit_tenant   = QLineEdit()
+        self.edit_community_id = QLineEdit()
+        self.edit_password.setEchoMode(QLineEdit.Password)
+
+        form.addRow("User:", self.edit_user)
+        form.addRow("Password:", self.edit_password)
+        form.addRow("Tenant:", self.edit_tenant)
+        form.addRow("Community ID:", self.edit_community_id)
+        layout.addLayout(form)
+
+        self.error_label = QLabel()
+        self.error_label.setVisible(False)
+        layout.addWidget(self.error_label)
+
+        for field in (self.edit_user, self.edit_password, self.edit_tenant, self.edit_community_id):
+            field.returnPressed.connect(self._on_accept)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self._on_accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def _on_accept(self):
+        if not all([
+            self.edit_user.text().strip(),
+            self.edit_password.text().strip(),
+            self.edit_tenant.text().strip(),
+            self.edit_community_id.text(),
+        ]):
+            self.error_label.setText("All fields are required.")
+            self.error_label.setVisible(True)
+            return
+        self.error_label.setVisible(False)
+        self.accept()
+
+    def get_credentials(self):
+        logcred = {
+            "user":     self.edit_user.text().strip(),
+            "login":    self.edit_password.text().strip(),
+            "tenant":   self.edit_tenant.text().strip(),
+            "password": self.edit_community_id.text(),
+        }
+        print(f"Try logging in with {logcred}")
+        return {
+            "user":     self.edit_user.text().strip(),
+            "login":    self.edit_password.text().strip(),
+            "tenant":   self.edit_tenant.text().strip(),
+            "password": self.edit_community_id.text(),
+        }
+
+

@@ -10,7 +10,7 @@ from PyQt5.QtCore import *
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
 from PyQt5.QtWidgets import QLabel, QFileDialog, QMessageBox, QGridLayout, QTableWidget, QTableWidgetItem, QListWidget, QWidget, QListWidgetItem, QCheckBox, QListWidgetItem, QPushButton, QVBoxLayout, QDialog
-from importing import invoices,emails, masterdata,energydata,load_filepath, check_whether_data_exists, newmember
+from importing import invoices,emails, masterdata,energydata,load_filepath, check_whether_data_exists, newmember, LoginDialog
 from exporting import produce_sepa_export_dfs, produce_invoices_and_save
 from PyQt5.QtWidgets import QHBoxLayout
 import datetime as dt
@@ -645,6 +645,13 @@ class MainWindow(QtWidgets.QMainWindow):
         return menubardata
 
     def init_menubardata_make_invoices(self):
+        def login_eeg_faktura():
+            dlg = LoginDialog(parent=self)  # pass your main window as parent
+            if dlg.exec_() == QDialog.Accepted:
+                creds = dlg.get_credentials()
+                # creds["user"], creds["login"], creds["tenant"], creds["password"]
+
+
         def check_energydata():
             print("I check the energydata")
             check,datamissing = check_whether_data_exists(energydata= self.energydata,energymetadatarequired= True)
@@ -873,7 +880,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
-        menubardata = [["Überprüfe die Energiedatenqualität","",check_energydata],["Erstelle alle Rechnungen", "", create_invoices_and_save],["Verschicke die Rechnungen per Mail", "", send_invoices_mail]]
+        menubardata = [["Login in EEG Faktura","",login_eeg_faktura],["Überprüfe die Energiedatenqualität","",check_energydata],["Erstelle alle Rechnungen", "", create_invoices_and_save],["Verschicke die Rechnungen per Mail", "", send_invoices_mail]]
         return menubardata
 
 
