@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="build for linux">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix dependencies">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -681,7 +680,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779044905664</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="fix dependencies">
+      <option name="closed" value="true" />
+      <created>1779046737633</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1779046737633</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -711,7 +718,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="debit and transfer merging for easier calculation" />
     <MESSAGE value="Make Login Prompt more universal" />
     <MESSAGE value="New member checkin somehow (buggy?) finished" />
     <MESSAGE value="produc invoices finished. before makeing 3 plots" />
@@ -736,7 +742,8 @@
     <MESSAGE value="newer python" />
     <MESSAGE value="permission to write" />
     <MESSAGE value="build for linux" />
-    <option name="LAST_COMMIT_MESSAGE" value="build for linux" />
+    <MESSAGE value="fix dependencies" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix dependencies" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
