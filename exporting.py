@@ -578,8 +578,12 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                                      path,
                                      doc_path])
                 except Exception as e:
-                    errorbox = QMessageBox(f"Saving as .pdf didnot work (Neither Word or Libreoffice installed?) \n {e}")
                     print(f"saving didnot work {e}")
+                    msg = QMessageBox()
+                    msg.setText(f"Saving as .pdf didnot work (Neither Word or Libreoffice installed?) \n {e}")
+                    msg.setWindowTitle("Error")
+                    msg.exec_()
+
             return doc_path
 
         # print(f"Save invoice of {name} to {os.path.join(savedirfp, f'{namefile}.pdf')}")
