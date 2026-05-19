@@ -568,9 +568,18 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                 print("convert docx to pdf on windows with word installed")
 
             except:
+                import platform
+
+                if platform.system() == 'Windows':
+                    soffice = r'C:\Program Files\LibreOffice\program\soffice.exe'
+                elif platform.system() == 'Darwin':  # Mac
+                    soffice = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+                else:  # Linux
+                    soffice = 'soffice'
 
                 try:
-                    subprocess.call(['soffice',
+                    print(f"Try running soffice with {soffice}")
+                    subprocess.call([soffice,
                                      # '--headless',
                                      '--convert-to',
                                      'pdf',
@@ -578,11 +587,23 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                                      path,
                                      doc_path])
                 except Exception as e:
-                    print(f"saving didnot work {e}")
-                    msg = QMessageBox()
-                    msg.setText(f"Saving as .pdf didnot work (Neither Word or Libreoffice installed?) \n {e}")
-                    msg.setWindowTitle("Error")
-                    msg.exec_()
+                    try:
+                        print("Last resort: serarch for soffice")
+                        soffice = subprocess.run(['where', 'soffice'], capture_output=True, text=True)
+                        print(f"Found soffice: {soffice}")
+                        subprocess.call([soffice,
+                                     # '--headless',
+                                     '--convert-to',
+                                     'pdf',
+                                     '--outdir',
+                                     path,
+                                     doc_path])
+                    except Exception as e:
+                        print(f"saving didnot work {e}")
+                        msg = QMessageBox()
+                        msg.setText(f"Saving as .pdf didnot work (Neither Word or Libreoffice installed?) \n {e}")
+                        msg.setWindowTitle("Error")
+                        msg.exec_()
 
             return doc_path
 
