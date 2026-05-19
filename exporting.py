@@ -10,6 +10,8 @@ import matplotlib
 matplotlib.use('Agg')
 from io import BytesIO
 from PyQt5.QtWidgets import QMessageBox
+import re
+import difflib
 
 
 def check_doubles(invoices):
@@ -318,9 +320,33 @@ def produce_invoices_and_save(energydata,invoicedata,masterdata,invoicetemplate,
                 try:
                     energydata.loc[:, pd.IndexSlice[:, name_new, :, :]]
                 except:
-                    print(f"Nothing worked, abort, change the name of the columns in the files sot that they are the same: \n"
-                          f"in Invoice: {name}, so that it maches in the Energydata any f the columns: {energydata.columns.get_level_values(level="Name")}")
-                    return None
+                    print("Last try removing titles etc.")
+
+                    def normalize_name(name: str) -> str:
+                        title_pattern = r'\b(dr\.?|mag\.?|prof\.?|ing\.?|di\.?|msc\.?|bsc\.?|mba\.?|phd\.?|ddr\.?|dr\.dr\.?)\b'
+                        name = re.sub(title_pattern, '', name, flags=re.IGNORECASE)
+                        return ' '.join(name.split()).strip().lower()
+
+                    def match_name(query: str, candidates: list[str], threshold: float = 0.8):
+                        norm_query = normalize_name(query)
+                        norm_candidates = [normalize_name(c) for c in candidates]
+
+                        matches = []
+                        for original, normed in zip(candidates, norm_candidates):
+                            score = difflib.SequenceMatcher(None, norm_query, normed).ratio()
+                            if score >= threshold:
+                                matches.append(original)
+
+                        # Sort best match first
+                        matches.sort(key=lambda x: x[1], reverse=True)
+                        return matches[0]
+                    try:
+                        name_new =match_name(name_new, energydata.columns.get_level_values(level="Name"))
+                        energydata.loc[:, pd.IndexSlice[:, name_new, :, :]]
+                    except:
+                        print(f"Nothing worked, abort, change the name of the columns in the files sot that they are the same: \n"
+                              f"in Invoice: {name}, so that it maches in the Energydata any f the columns: {energydata.columns.get_level_values(level="Name")}")
+                        return None
 
         name = name_new
 

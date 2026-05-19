@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix filepaths templates">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix filepaths templates 2">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exporting.py" beforeDir="false" afterPath="$PROJECT_DIR$/exporting.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -289,9 +290,6 @@
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -696,7 +694,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779050042364</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="fix filepaths templates 2">
+      <option name="closed" value="true" />
+      <created>1779050589198</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1779050589198</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -726,7 +732,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="New member checkin somehow (buggy?) finished" />
     <MESSAGE value="produc invoices finished. before makeing 3 plots" />
     <MESSAGE value="changing for mandates to be in eegfaktura database" />
     <MESSAGE value="include conf.json" />
@@ -751,7 +756,8 @@
     <MESSAGE value="build for linux" />
     <MESSAGE value="fix dependencies" />
     <MESSAGE value="fix filepaths templates" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix filepaths templates" />
+    <MESSAGE value="fix filepaths templates 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix filepaths templates 2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -763,12 +769,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>311</line>
+          <line>313</line>
           <option name="timeStamp" value="74" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>143</line>
+          <line>145</line>
           <option name="timeStamp" value="76" />
         </line-breakpoint>
       </breakpoints>

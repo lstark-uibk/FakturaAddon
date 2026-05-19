@@ -706,8 +706,7 @@ class MainWindow(QtWidgets.QMainWindow):
         def change_Settings():
             dlg = SettingsDialog()
             if dlg.exec_() == QDialog.Accepted:
-                creds = dlg.get_credentials()
-                print(creds)
+                pass
 
         def check_energydata():
             print("I check the energydata")
