@@ -137,7 +137,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print("No config .env file, lets create one")
             dlg = SettingsDialog()
             if dlg.exec_() == QDialog.Accepted:
-                pass
+                self.config = load_env()
 
         # with open("templates/config.json", 'r') as file:
         #     self.config = json.load(file)
