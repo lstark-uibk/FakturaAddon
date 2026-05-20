@@ -143,10 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
         #     self.config = json.load(file)
 
         self.home_directory = self.config["home_directory"]
-        paths_datanames = ["Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","EEG Faktura Quartalsenergiedaten QOV","Rechnungen Vorlage", "Emails Vorlage"]
+        paths_datanames = ["Rechnungsdaten","EEG Faktura Stammdaten","EEG Faktura Quartalsenergiedaten","EEG Faktura Quartalsenergiedaten QOV"]#,"Rechnungen Vorlage", "Emails Vorlage"]
         self.loaded_filepaths = pd.DataFrame({"Daten":paths_datanames,
-                                  "Speicherort":["Auswählen","Auswählen","Auswählen","Auswählen",self.config["template_export_invoice"],self.config["template_email"]],
-                                              })
+                                  "Speicherort":["Auswählen","Auswählen","Auswählen","Auswählen"]})#,self.config["template_export_invoice"],self.config["template_email"]],})
         # promptwindows
 
         self.loginprompt = None
@@ -399,13 +398,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 load_emaildata_fp(filepath)
 
 
-        allfunctions = [import_invoice_data, import_masterdata_data,import_energy_data,partial(import_energy_data,load_qov = True), select_template_invoice,import_email_template]
+        allfunctions = [import_invoice_data, import_masterdata_data,import_energy_data,partial(import_energy_data,load_qov = True)]#, select_template_invoice,import_email_template]
 
         for index,function in enumerate(allfunctions):
             table_widget_in_which_loading_is_done.functions_on_row_clicked[index] = function
 
-        load_template_invoice_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Rechnungen Vorlage","Speicherort"].iloc[0])
-        load_emaildata_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "Emails Vorlage","Speicherort"].iloc[0])
+        load_template_invoice_from_fp(self.config["template_export_invoice"])
+        load_emaildata_fp(self.config["template_email"])
 
 
         # loadp_masterdata_from_fp(self.loaded_filepaths.loc[self.loaded_filepaths["Daten"] == "EEG Faktura Stammdaten","Speicherort"].iloc[0])
@@ -776,7 +775,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def create_invoices_and_save():
             print("I try to create the invoices and the save it.")
-            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True)
+            check,datamissing = check_whether_data_exists(invoices = self.invoices, energydata= self.energydata,masterdata=self.masterdata,invoicedatarequired=True, invoicestemprequired=True, masterdatarequired=True,energydatarequired=True)
             print(f"Check was {check}, datamissing {datamissing}")
             # if "Energiedaten" in datamissing:
             #     errorbox = QMessageBox()

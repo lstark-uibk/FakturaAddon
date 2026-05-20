@@ -300,7 +300,7 @@ def load_masterdata_meta(filepath):
 def check_whether_data_exists(mandates = None,masterdata = None,invoices = None,energydata = None, emails = None,
                               mandatesrequired = False, invoicedatarequired = False, masterdatarequired = False,
                               masterdataexporttemprequired = False, emailstemprequired = False,invoicestemprequired = False,energymetadatarequired = False,
-                              energydataoptional = False, newmember = None, newmemberdatarequired = False, newmembertemprequired = False):
+                              energydatarequired = False, newmember = None, newmemberdatarequired = False, newmembertemprequired = False):
     data_missing = []
     check = True
     if mandatesrequired:
@@ -327,8 +327,9 @@ def check_whether_data_exists(mandates = None,masterdata = None,invoices = None,
         if invoices.template is None:
             check = False
             data_missing.append("Rechnungen Vorlage")
-    if energydataoptional:
+    if energydatarequired:
         if energydata.data is None:
+            check = False
             data_missing.append("Energiedaten")
     if energymetadatarequired:
         if energydata.metadata is None:

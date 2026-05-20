@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="fix settings bug &#10;fix bug with dr." />
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="relead setting after new settings">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -709,7 +713,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779190247280</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="relead setting after new settings">
+      <option name="closed" value="true" />
+      <created>1779192148475</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1779192148476</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -739,7 +751,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="changing for mandates to be in eegfaktura database" />
     <MESSAGE value="include conf.json" />
     <MESSAGE value="include templates" />
     <MESSAGE value="Some cleanups" />
@@ -764,7 +775,8 @@
     <MESSAGE value="fix filepaths templates" />
     <MESSAGE value="fix filepaths templates 2" />
     <MESSAGE value="fix settings bug &#10;fix bug with dr." />
-    <option name="LAST_COMMIT_MESSAGE" value="fix settings bug &#10;fix bug with dr." />
+    <MESSAGE value="relead setting after new settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="relead setting after new settings" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -773,16 +785,6 @@
           <url>file://$PROJECT_DIR$/importing.py</url>
           <line>216</line>
           <option name="timeStamp" value="70" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>313</line>
-          <option name="timeStamp" value="74" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/exporting.py</url>
-          <line>145</line>
-          <option name="timeStamp" value="76" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
