@@ -697,8 +697,8 @@ class SettingsDialog(QDialog):
         email_row.addWidget(email_browse)
 
         form.addRow("Mail address:", self.edit_my_mail)
-        form.addRow("IMAP server:", self.edit_imap_server)
-        form.addRow("Mail password:", self.edit_my_mail_pw)
+        form.addRow("IMAP server (z.b. smtp.gmail.com für gmail):", self.edit_imap_server)
+        form.addRow("Mail password (bei GMail App PW nicht normales PW):", self.edit_my_mail_pw)
         form.addRow("Home directory:", dir_row)
         form.addRow("EEG name:", self.edit_eeg_name)
         form.addRow("Invoice template:", invoice_row)
