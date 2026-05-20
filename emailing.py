@@ -464,18 +464,21 @@ def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_ema
         return folder_name
 
     # SAVE TO SENT FOLDER
-    with imaplib.IMAP4_SSL(host, 993) as imap:
-        imap.login(sender_email, password)
-        folder = ensure_folder(imap, "INBOX.Gesendete_Rechnungen")
-        # show folders
-        print(imap.list())
+    try:
+        with imaplib.IMAP4_SSL(host, 993) as imap:
+            imap.login(sender_email, password)
+            folder = ensure_folder(imap, "INBOX.Gesendete_Rechnungen")
+            # show folders
+            print(imap.list())
 
-        result = imap.append(
-            folder,
-            "\\Seen",
-            imaplib.Time2Internaldate(datetime.now().timestamp()),
-            email.as_bytes()
-        )
+            result = imap.append(
+                folder,
+                "\\Seen",
+                imaplib.Time2Internaldate(datetime.now().timestamp()),
+                email.as_bytes()
+            )
 
-        print("Stored in:", folder)
+            print("Stored in:", folder)
+    except Exception as e:
+        print(f"Saving to Gesendete_Rechnungen nicht möglich\n {e}")
     print("... Done")

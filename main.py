@@ -90,6 +90,19 @@ class TableView(QtWidgets.QTableWidget):
 #             dialog = QFileDialog()
 #             foo_dir = dialog.getExistingDirectory(self, 'Select an awesome directory')
 #         buttons[0].pressed.connect()
+def load_env() -> dict:
+    values = {}
+    if not ENV_PATH.exists():
+        return values
+    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        for field, env_key in _ENV_KEYS.items():
+            if key.strip() == env_key:
+                values[field] = val.strip()
+    return values
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -117,19 +130,6 @@ class MainWindow(QtWidgets.QMainWindow):
             "template_email" : "TEMPLATE_EMAIL"
         }
 
-        def load_env() -> dict:
-            values = {}
-            if not ENV_PATH.exists():
-                return values
-            for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, val = line.partition("=")
-                for field, env_key in _ENV_KEYS.items():
-                    if key.strip() == env_key:
-                        values[field] = val.strip()
-            return values
 
         self.config = load_env()
         print(f"Conf: {self.config}")
@@ -705,7 +705,7 @@ class MainWindow(QtWidgets.QMainWindow):
         def change_Settings():
             dlg = SettingsDialog()
             if dlg.exec_() == QDialog.Accepted:
-                pass
+                self.config = load_env()
 
         def check_energydata():
             print("I check the energydata")

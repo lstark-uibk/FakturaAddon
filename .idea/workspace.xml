@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Nicer menuing with email sending">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/emailing.py" beforeDir="false" afterPath="$PROJECT_DIR$/emailing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
@@ -737,7 +737,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779270228150</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="Nicer menuing with email sending">
+      <option name="closed" value="true" />
+      <created>1779271607183</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1779271607184</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -767,7 +775,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Some cleanups" />
     <MESSAGE value="loading window for long excel import" />
     <MESSAGE value="making stuff clean" />
     <MESSAGE value="making templates clean" />
@@ -792,7 +799,8 @@
     <MESSAGE value="relead setting after new settings" />
     <MESSAGE value="delete loading templates in main window&#10;make energydata a requirement for invoice export" />
     <MESSAGE value="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)" />
+    <MESSAGE value="Nicer menuing with email sending" />
+    <option name="LAST_COMMIT_MESSAGE" value="Nicer menuing with email sending" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
