@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="email setup hinweise">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/emailing.py" beforeDir="false" afterPath="$PROJECT_DIR$/emailing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/email_template_clean.html" beforeDir="false" afterPath="$PROJECT_DIR$/email_template_clean.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/template_invoice_clean.docx" beforeDir="false" afterPath="$PROJECT_DIR$/template_invoice_clean.docx" afterDir="false" />
-    </list>
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="make port input and STARTTLS" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -363,14 +356,6 @@
       <workItem from="1757532507390" duration="218000" />
       <workItem from="1757694438070" duration="622000" />
       <workItem from="1757695106922" duration="1254000" />
-    </task>
-    <task id="LOCAL-00002" summary="sepa export loading files">
-      <option name="closed" value="true" />
-      <created>1731782617987</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1731782617987</updated>
     </task>
     <task id="LOCAL-00003" summary="sepa export almost working">
       <option name="closed" value="true" />
@@ -756,7 +741,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779274227778</updated>
     </task>
-    <option name="localTasksCounter" value="51" />
+    <task id="LOCAL-00051" summary="make port input and STARTTLS">
+      <option name="closed" value="true" />
+      <created>1779295997686</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1779295997688</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -786,7 +779,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="making templates clean" />
     <MESSAGE value="delete nextcloud" />
     <MESSAGE value="Energydata loading faster" />
     <MESSAGE value="cleandata" />
@@ -811,7 +803,8 @@
     <MESSAGE value="Nicer menuing with email sending" />
     <MESSAGE value="reload setting after changing" />
     <MESSAGE value="email setup hinweise" />
-    <option name="LAST_COMMIT_MESSAGE" value="email setup hinweise" />
+    <MESSAGE value="make port input and STARTTLS" />
+    <option name="LAST_COMMIT_MESSAGE" value="make port input and STARTTLS" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
