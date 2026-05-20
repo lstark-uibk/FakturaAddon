@@ -363,60 +363,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QDialogButtonBox, QLabel, QVBoxLayout
 )
 
-BASE_URL = "https://eegfaktura.at/energystore/query"
-ENV_PATH = Path(__file__).parent / ".env"
 
-# Mapping: internal field name → .env key
-_ENV_KEYS = {
-    "user":         "EEG_USER",
-    "password":     "EEG_PASSWORD",
-    "tenant":       "EEG_TENANT",
-    "community_id": "EEG_COMMUNITY_ID",
-}
-
-
-def load_env() -> dict:
-    """Read KEY=VALUE pairs from .env and return a dict with our credential fields."""
-    values = {}
-    if not ENV_PATH.exists():
-        return values
-    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, val = line.partition("=")
-        for field, env_key in _ENV_KEYS.items():
-            if key.strip() == env_key:
-                values[field] = val.strip()
-    return values
-
-
-def save_env(creds: dict) -> None:
-    """Write credentials back to .env, preserving any unrelated lines."""
-    to_write = {_ENV_KEYS[k]: v for k, v in creds.items() if k in _ENV_KEYS}
-
-    existing_lines = []
-    if ENV_PATH.exists():
-        existing_lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
-
-    updated = set()
-    new_lines = []
-    for line in existing_lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#") and "=" in stripped:
-            key = stripped.partition("=")[0].strip()
-            if key in to_write:
-                new_lines.append(f"{key}={to_write[key]}")
-                updated.add(key)
-                continue
-        new_lines.append(line)
-
-    # Append any keys not yet present in the file
-    for env_key, val in to_write.items():
-        if env_key not in updated:
-            new_lines.append(f"{env_key}={val}")
-
-    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
 def fetch_community_metadata(community_id: str, tenant: str, user: str, password: str) -> dict:
@@ -534,66 +481,6 @@ class LoginDialog(QDialog):
         """Returns the metadata response from the server (only valid after accept())."""
         return getattr(self, "_metadata", {})
 
-#
-import sys
-import requests
-from pathlib import Path
-from PyQt5.QtWidgets import (
-    QApplication, QDialog, QFormLayout, QLineEdit,
-    QDialogButtonBox, QLabel, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout
-)
-
-ENV_PATH = Path(__file__).parent / ".env"
-
-_ENV_KEYS = {
-    "my_mail":        "MAIL_ADDRESS",
-    "imap_server":    "MAIL_IMAP_SERVER",
-    "my_mail_pw":     "MAIL_PASSWORD",
-    "home_directory": "HOME_DIRECTORY",
-    "EEG_name":       "EEG_NAME",
-}
-
-
-def load_env() -> dict:
-    values = {}
-    if not ENV_PATH.exists():
-        return values
-    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, val = line.partition("=")
-        for field, env_key in _ENV_KEYS.items():
-            if key.strip() == env_key:
-                values[field] = val.strip()
-    return values
-
-
-def save_env(settings: dict) -> None:
-    to_write = {_ENV_KEYS[k]: v for k, v in settings.items() if k in _ENV_KEYS}
-
-    existing_lines = []
-    if ENV_PATH.exists():
-        existing_lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
-
-    updated = set()
-    new_lines = []
-    for line in existing_lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#") and "=" in stripped:
-            key = stripped.partition("=")[0].strip()
-            if key in to_write:
-                new_lines.append(f"{key}={to_write[key]}")
-                updated.add(key)
-                continue
-        new_lines.append(line)
-
-    for env_key, val in to_write.items():
-        if env_key not in updated:
-            new_lines.append(f"{env_key}={val}")
-
-    ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-
 
 import sys
 import requests
@@ -613,7 +500,10 @@ _ENV_KEYS = {
     "EEG_name":                 "EEG_NAME",
     "template_export_invoice":  "TEMPLATE_EXPORT_INVOICE",
     "template_email":           "TEMPLATE_EMAIL",
+    "port": "PORT"
+
 }
+BASE_URL = "https://eegfaktura.at/energystore/query"
 
 
 def load_env() -> dict:
@@ -661,7 +551,7 @@ class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setFixedWidth(700)
+        self.setFixedWidth(1400)
 
         layout = QVBoxLayout(self)
 
@@ -669,6 +559,7 @@ class SettingsDialog(QDialog):
 
         self.edit_my_mail     = QLineEdit()
         self.edit_imap_server = QLineEdit()
+        self.edit_port = QLineEdit()
         self.edit_my_mail_pw  = QLineEdit()
         self.edit_my_mail_pw.setEchoMode(QLineEdit.Password)
         self.edit_eeg_name    = QLineEdit()
@@ -697,8 +588,9 @@ class SettingsDialog(QDialog):
         email_row.addWidget(email_browse)
 
         form.addRow("Mail address:", self.edit_my_mail)
-        form.addRow("IMAP server (z.b. smtp.gmail.com für gmail):", self.edit_imap_server)
-        form.addRow("Mail password (bei GMail App PW nicht normales PW):", self.edit_my_mail_pw)
+        form.addRow("Host \n (z.b. smtp.gmail.com für gmail):", self.edit_imap_server)
+        form.addRow("Port \n (z.b. 587):", self.edit_port)
+        form.addRow("Mail password \n(bei GMail App PW nicht normales PW):", self.edit_my_mail_pw)
         form.addRow("Home directory:", dir_row)
         form.addRow("EEG name:", self.edit_eeg_name)
         form.addRow("Invoice template:", invoice_row)
@@ -713,7 +605,7 @@ class SettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
-        for field in (self.edit_my_mail, self.edit_imap_server,
+        for field in (self.edit_my_mail, self.edit_imap_server,  self.edit_port,
                       self.edit_my_mail_pw, self.edit_home_directory,
                       self.edit_eeg_name, self.edit_template_invoice,
                       self.edit_template_email):
@@ -724,6 +616,7 @@ class SettingsDialog(QDialog):
         self.edit_my_mail.setText(saved.get("my_mail", ""))
         self.edit_imap_server.setText(saved.get("imap_server", ""))
         self.edit_my_mail_pw.setText(saved.get("my_mail_pw", ""))
+        self.edit_port.setText(saved.get("port", ""))
         self.edit_home_directory.setText(saved.get("home_directory", ""))
         self.edit_eeg_name.setText(saved.get("EEG_name", ""))
         if saved.get("template_export_invoice"):
@@ -756,6 +649,7 @@ class SettingsDialog(QDialog):
             "my_mail_pw":               self.edit_my_mail_pw.text(),
             "home_directory":           self.edit_home_directory.text().strip(),
             "EEG_name":                 self.edit_eeg_name.text().strip(),
+            "port":                     self.edit_port.text().strip(),
             "template_export_invoice":  self.edit_template_invoice.text().strip(),
             "template_email":           self.edit_template_email.text().strip(),
         }

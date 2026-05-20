@@ -90,7 +90,26 @@ class TableView(QtWidgets.QTableWidget):
 #             dialog = QFileDialog()
 #             foo_dir = dialog.getExistingDirectory(self, 'Select an awesome directory')
 #         buttons[0].pressed.connect()
+
+
+
 def load_env() -> dict:
+    ENV_PATH = Path(__file__).parent / ".env"
+
+    _ENV_KEYS = {
+        "user": "EEG_USER",
+        "password": "EEG_PASSWORD",
+        "tenant": "EEG_TENANT",
+        "community_id": "EEG_COMMUNITY_ID",
+        "my_mail": "MAIL_ADDRESS",
+        "imap_server": "MAIL_IMAP_SERVER",
+        "port": "PORT",
+        "my_mail_pw": "MAIL_PASSWORD",
+        "home_directory": "HOME_DIRECTORY",
+        "EEG_name": "EEG_NAME",
+        "template_export_invoice": "TEMPLATE_EXPORT_INVOICE",
+        "template_email": "TEMPLATE_EMAIL"
+    }
     values = {}
     if not ENV_PATH.exists():
         return values
@@ -113,22 +132,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(20, 20)
         self.second_window = None
         self.exportwindow = None
-
-        ENV_PATH = Path(__file__).parent / ".env"
-
-        _ENV_KEYS = {
-            "user": "EEG_USER",
-            "password": "EEG_PASSWORD",
-            "tenant": "EEG_TENANT",
-            "community_id": "EEG_COMMUNITY_ID",
-            "my_mail": "MAIL_ADDRESS",
-            "imap_server": "MAIL_IMAP_SERVER",
-            "my_mail_pw": "MAIL_PASSWORD",
-            "home_directory": "HOME_DIRECTORY",
-            "EEG_name": "EEG_NAME",
-            "template_export_invoice" : "TEMPLATE_EXPORT_INVOICE",
-            "template_email" : "TEMPLATE_EMAIL"
-        }
 
 
         self.config = load_env()
@@ -899,9 +902,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                 nameinvoicefile = f"Rechnung_{self.thisinvoices_year}_q{self.thisinvoice_quart}_{receivername}.pdf"
 
                                 fpinvoicefile = os.path.join(self.safepath_this_invoices , nameinvoicefile)
-                                send_mail_to_one_person(self.config["my_mail"],self.config["my_mail_pw"], self.config["imap_server"],self.config["EEG_name"],email_this,person_data["Name 1"],
-                                                        self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile, masterdata)
-
+                                try:
+                                    send_mail_to_one_person(self.config["my_mail"],self.config["my_mail_pw"], self.config["imap_server"],self.config["EEG_name"],email_this,person_data["Name 1"],
+                                                        self.thisinvoice_quart, self.thisinvoices_year, self.emails.template, fpinvoicefile, masterdata,port=self.config["port"])
+                                except Exception as e:
+                                    print(f"There was an error when sending. {e}")
 
                         else: print("Dont send")
                     else:

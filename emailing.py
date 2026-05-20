@@ -394,6 +394,8 @@ class Sendapproval(QDialog):
         self.accept()
 
 def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_email,receiver_forename,invquart,invyear, template,fp_to_invoice, masterdata,port = 587):
+    if not port:
+        port = 587
     email = EmailMessage()
 
     email['Subject'] = f"Rechnung {sender_name} {invyear} Quartal {invquart}"
@@ -438,6 +440,9 @@ def send_mail_to_one_person(sender_email,password,host,sender_name, receiver_ema
     #     )
 
     with smtplib.SMTP(host,port,) as s:
+        s.ehlo()
+        s.starttls()
+        s.ehlo()
         s.login(sender_email, password)
         s.send_message(email,sender_email,receiver_email)
 

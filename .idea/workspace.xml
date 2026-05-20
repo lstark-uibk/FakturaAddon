@@ -4,8 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="reload setting after changing">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="email setup hinweise">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/emailing.py" beforeDir="false" afterPath="$PROJECT_DIR$/emailing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/email_template_clean.html" beforeDir="false" afterPath="$PROJECT_DIR$/email_template_clean.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/template_invoice_clean.docx" beforeDir="false" afterPath="$PROJECT_DIR$/template_invoice_clean.docx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,8 +95,8 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/workflows" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/workflows" />
       <recent name="$PROJECT_DIR$/cleandata" />
     </key>
   </component>
@@ -358,14 +363,6 @@
       <workItem from="1757532507390" duration="218000" />
       <workItem from="1757694438070" duration="622000" />
       <workItem from="1757695106922" duration="1254000" />
-    </task>
-    <task id="LOCAL-00001" summary="first setup with placeholders">
-      <option name="closed" value="true" />
-      <created>1730660212243</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1730660212243</updated>
     </task>
     <task id="LOCAL-00002" summary="sepa export loading files">
       <option name="closed" value="true" />
@@ -751,7 +748,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779273960390</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="email setup hinweise">
+      <option name="closed" value="true" />
+      <created>1779274227770</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1779274227778</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -781,7 +786,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="making stuff clean" />
     <MESSAGE value="making templates clean" />
     <MESSAGE value="delete nextcloud" />
     <MESSAGE value="Energydata loading faster" />
@@ -806,7 +810,8 @@
     <MESSAGE value="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)" />
     <MESSAGE value="Nicer menuing with email sending" />
     <MESSAGE value="reload setting after changing" />
-    <option name="LAST_COMMIT_MESSAGE" value="reload setting after changing" />
+    <MESSAGE value="email setup hinweise" />
+    <option name="LAST_COMMIT_MESSAGE" value="email setup hinweise" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
