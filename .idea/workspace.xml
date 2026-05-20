@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="relead setting after new settings">
+    <list default="true" id="b404d36a-8be3-4cac-9047-cec5b13d8c68" name="Changes" comment="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/importing.py" beforeDir="false" afterPath="$PROJECT_DIR$/importing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/emailing.py" beforeDir="false" afterPath="$PROJECT_DIR$/emailing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -721,7 +721,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779192148476</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="delete loading templates in main window&#10;make energydata a requirement for invoice export">
+      <option name="closed" value="true" />
+      <created>1779267350630</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1779267350630</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)">
+      <option name="closed" value="true" />
+      <created>1779270228150</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1779270228150</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -751,8 +767,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="include conf.json" />
-    <MESSAGE value="include templates" />
     <MESSAGE value="Some cleanups" />
     <MESSAGE value="loading window for long excel import" />
     <MESSAGE value="making stuff clean" />
@@ -776,7 +790,9 @@
     <MESSAGE value="fix filepaths templates 2" />
     <MESSAGE value="fix settings bug &#10;fix bug with dr." />
     <MESSAGE value="relead setting after new settings" />
-    <option name="LAST_COMMIT_MESSAGE" value="relead setting after new settings" />
+    <MESSAGE value="delete loading templates in main window&#10;make energydata a requirement for invoice export" />
+    <MESSAGE value="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Solving bug with 2 cons and 2 produc (hatchnr. goes up 8 times instead of 4 times)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -786,13 +802,33 @@
           <line>216</line>
           <option name="timeStamp" value="70" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/exporting.py</url>
+          <line>443</line>
+          <option name="timeStamp" value="77" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/exporting.py</url>
+          <line>438</line>
+          <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/exporting.py</url>
+          <line>557</line>
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/emailing.py</url>
+          <line>377</line>
+          <option name="timeStamp" value="84" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
         <watch expression="if not self.invoices.data: print(&quot;yea&quot;)" language="Python" />
       </configuration>
-      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="378">
+      <inline-watch fileUrl="file://$PROJECT_DIR$/emailing.py" line="395">
         <watch expression="password" language="Python" />
       </inline-watch>
     </watches-manager>

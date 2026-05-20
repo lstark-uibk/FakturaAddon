@@ -909,7 +909,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 else:
                     errorbox = QMessageBox()
-                    text = f"Anmeldung bei Mailserver nicht möglich mit Daten:\nMail Adresse: {self.config['my_mail']}, \nMail Passwort: {self.config['my_mail_pw']}, \nServer:{self.config['imap_server']}. \nCheck config file. "
+                    text = f"Anmeldung bei Mailserver nicht möglich mit Daten:\nMail Adresse: {self.config['my_mail']}, \nMail Passwort: {self.config['my_mail_pw']}, \nServer:{self.config['imap_server']}. \nCheck Settings. "
                     for missing in datamissing:
                         text += f"\n- {missing}"
                     errorbox.setText(text)

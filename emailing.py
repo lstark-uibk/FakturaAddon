@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout,QListWidget, QPushButton, QLabel, QScrollArea, QTextEdit, QFormLayout, QLineEdit, QGridLayout, QCheckBox, QDialog
+from PyQt5.QtCore import Qt
 import email
 from email.header import decode_header
 from email.mime.text import MIMEText
@@ -301,49 +302,65 @@ def send_mail(subject = '', body = '',senderadress = '',password = '', receivera
 
 
 class MailAdressSelection(QDialog):
-    """
-    This "window" is a QWidget. If it has no parent, it
-    will appear as a free-floating window as we want.
-    """
-    def __init__(self,emails, title = ""):
+    def __init__(self, emails, title=""):
         super().__init__()
         self.setWindowTitle(title)
+        self.setFixedSize(800, 1000)
+        self.move(200, 200)
 
-        print("Select which mail adresses you want to send")
-        self.resize(800, 400)
-        self.move(200,200)
         layout = QVBoxLayout()
-        self.emailadress_list = QListWidget()
-        self.listCheckBox = emails.values.tolist()
-        print(self.listCheckBox)
-        grid = QGridLayout()
 
+        # Select/Deselect All checkbox
+        self.select_all_cb = QCheckBox("Select / Deselect All")
+        self.select_all_cb.setChecked(True)
+        self.select_all_cb.stateChanged.connect(self.toggle_all)
+        layout.addWidget(self.select_all_cb)
+
+        # Scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        container = QWidget()
+        grid = QGridLayout(container)
+
+        self.listCheckBox = emails.values.tolist()
         for i, v in enumerate(self.listCheckBox):
             self.listCheckBox[i] = QCheckBox(v)
             self.listCheckBox[i].setChecked(True)
+            self.listCheckBox[i].stateChanged.connect(self.update_select_all)
             grid.addWidget(self.listCheckBox[i], i, 0)
+
+        scroll.setWidget(container)
+        layout.addWidget(scroll)
 
         self.okbut = QPushButton("OK")
         self.okbut.pressed.connect(self.confirm_selection)
-        layout.addLayout(grid)
         layout.addWidget(self.okbut)
 
         self.setLayout(layout)
 
+    def toggle_all(self, state):
+        for cb in self.listCheckBox:
+            cb.blockSignals(True)
+            cb.setChecked(state == Qt.Checked)
+            cb.blockSignals(False)
+
+    def update_select_all(self):
+        all_checked = all(cb.isChecked() for cb in self.listCheckBox)
+        none_checked = not any(cb.isChecked() for cb in self.listCheckBox)
+        self.select_all_cb.blockSignals(True)
+        if all_checked:
+            self.select_all_cb.setCheckState(Qt.Checked)
+        elif none_checked:
+            self.select_all_cb.setCheckState(Qt.Unchecked)
+        else:
+            self.select_all_cb.setCheckState(Qt.PartiallyChecked)
+        self.select_all_cb.blockSignals(False)
+
     def confirm_selection(self):
-        selected_names = []
-        for i, v in enumerate(self.listCheckBox):
-            selected_names.append(v.checkState())
-        selected_names = np.array(selected_names)
-        selected_names = selected_names == 2
-        print(selected_names)
-
-
-
+        selected_names = np.array([cb.isChecked() for cb in self.listCheckBox])
         self.result = selected_names
         self.accept()
-
-
 
 class Sendapproval(QDialog):
     """
@@ -359,7 +376,7 @@ class Sendapproval(QDialog):
         self.move(200,200)
         layout = QVBoxLayout()
         sublayout = QHBoxLayout()
-        layout.addWidget(QLabel(f"Soll ich den folgenden Personen ein Mail mit deren Rechnungen schreiben? \n{emails}"))
+        layout.addWidget(QLabel(f"Soll ich den folgenden Personen ein Mail mit deren Rechnungen schreiben? \n\n{emails.to_string(index=False)}"))
         self.yesbut = QPushButton("Ja")
         self.nobut = QPushButton("Nein")
         sublayout.addWidget(self.yesbut)
